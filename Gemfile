@@ -1,6 +1,7 @@
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
-git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+gem 'legion-extensions', path: '~/legion-io/legion-extensions'
+gem 'legion-transport', path: '~/legion-io/legion-transport'
 
 # Specify your gem's dependencies in legion-extensions-conditioner.gemspec
 gemspec

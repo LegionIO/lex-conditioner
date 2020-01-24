@@ -1,10 +1,10 @@
-require "legion/extensions/conditioner/version"
+require 'legion/extensions/conditioner/version'
+require 'legion/extensions'
 
 module Legion
   module Extensions
     module Conditioner
-      class Error < StandardError; end
-      # Your code goes here...
+      extend Legion::Extensions::Default
     end
   end
 end
