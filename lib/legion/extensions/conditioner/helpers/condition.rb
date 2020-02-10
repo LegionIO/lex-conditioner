@@ -1,6 +1,4 @@
 require_relative 'comparator'
-# require 'legion/exceptions/missingargument'
-# require 'legion/exceptions/wrongtype'
 
 module Legion
   module Extensions

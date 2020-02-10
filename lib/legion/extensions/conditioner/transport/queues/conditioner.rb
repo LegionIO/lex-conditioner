@@ -1,13 +1,9 @@
-module Legion
-  module Extensions
-    module Conditioner
-      module Transport
-        module Queues
-          class Conditioner < Legion::Transport::Queue
-            def queue_name
-              'conditioner'
-            end
-          end
+module Legion::Extensions::Conditioner
+  module Transport
+    module Queues
+      class Conditioner < Legion::Transport::Queue
+        def queue_name
+          'task.conditioner'
         end
       end
     end
