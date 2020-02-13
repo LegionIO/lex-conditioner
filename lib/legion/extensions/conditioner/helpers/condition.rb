@@ -4,8 +4,6 @@ module Legion
   module Extensions
     module Conditioner
       class Condition
-        attr_accessor :conditions, :values, :taskid, :valid
-
         def initialize(args)
           @conditions = Legion::JSON.load(args[:conditions])
           @values = to_dotted_hash(args[:values])
@@ -44,9 +42,23 @@ module Legion
               result = validate_test('conditions' => { 'all' => rule[:all] }) if rule.include? :all
               result = validate_test('conditions' => { 'any' => rule[:any] }) if rule.include? :any
               if rule[:operator] == 'equal'
-                result = Legion::Extensions::Conditioner::Comparator.equal(rule[:fact], rule[:value], @values)
-              elsif rule[:operator] == 'notequal'
-                result = Legion::Extensions::Conditioner::Comparator.not_equal(rule[:fact], rule[:value], @values)
+                result = Legion::Extensions::Conditioner::Comparator.equal?(rule[:fact], rule[:value], @values)
+              elsif rule[:operator] == 'not_equal'
+                result = Legion::Extensions::Conditioner::Comparator.not_equal?(rule[:fact], rule[:value], @values)
+              elsif rule[:operator] == 'nil'
+                result = Legion::Extensions::Conditioner::Comparator.nil?(rule[:fact], @values)
+              elsif rule[:operator] == 'not_nil'
+                result = Legion::Extensions::Conditioner::Comparator.not_nil?(rule[:fact], @values)
+              elsif rule[:operator] == 'is_false'
+                result = Legion::Extensions::Conditioner::Comparator.is_false?(rule[:fact], @values)
+              elsif rule[:operator] == 'is_true'
+                result = Legion::Extensions::Conditioner::Comparator.is_true?(rule[:fact], @values)
+              elsif rule[:operator] == 'is_string'
+                result = Legion::Extensions::Conditioner::Comparator.is_string?(rule[:fact], @values)
+              elsif rule[:operator] == 'is_array'
+                result = Legion::Extensions::Conditioner::Comparator.is_array?(rule[:fact], @values)
+              elsif rule[:operator] == 'is_integer'
+                result = Legion::Extensions::Conditioner::Comparator.is_integer?(rule[:fact], @values)
               end
 
               return true if condition[0] == :any && result == true

@@ -4,14 +4,16 @@ module Legion::Extensions::Conditioner
   module Runners
     module Conditioner
       def self.check(payload)
-        conditioner = Legion::Extensions::Conditioner::Condition.new(conditions: payload[:conditions], task_id: payload[:task_id], values: payload[:options])
+        conditioner = Legion::Extensions::Conditioner::Condition.new(conditions: payload[:conditions], task_id: payload[:task_id], values: payload)
         if conditioner.valid?
-          Legion::Extensions::Conditioner::Transport::Messages::Conditioner.new(payload: payload, status: 'succeeded').publish
+          Legion::Extensions::Conditioner::Transport::Messages::Conditioner.new(**payload).publish
+          status = 'task.queued'
         else
-          Legion::Extensions::Conditioner::Transport::Messages::Conditioner.new(payload).publish
+          status = 'conditioner.failed'
         end
+
         unless payload[:task_id].nil?
-          Legion::Transport::Messages::TaskUpdate.new(task_id: payload[:task_id], status: 'conditioner.failed').publish
+          Legion::Transport::Messages::TaskUpdate.new(task_id: payload[:task_id], status: status).publish
         end
 
         { success: true, valid: conditioner.valid? }

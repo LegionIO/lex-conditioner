@@ -1,3 +1,5 @@
+require 'legion/extensions/transport/autobuild'
+
 module Legion::Extensions::Conditioner
   module Transport
     module AutoBuild
