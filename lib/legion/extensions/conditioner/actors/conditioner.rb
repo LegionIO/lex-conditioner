@@ -4,6 +4,10 @@ module Legion::Extensions::Conditioner
       def runner_function
         'check'
       end
+
+      def use_runner
+        false
+      end
     end
   end
 end
