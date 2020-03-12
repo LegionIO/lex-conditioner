@@ -5,7 +5,11 @@ module Legion::Extensions::Conditioner
         'check'
       end
 
-      def use_runner
+      def check_subtask?
+        false
+      end
+
+      def generate_task?
         false
       end
     end
