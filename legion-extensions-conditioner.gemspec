@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   if spec.respond_to?(:metadata)
     spec.metadata['homepage_uri'] = spec.homepage
     spec.metadata['source_code_uri'] = 'https://bitbucket.org/legion-io/lex-conditioner'
-    # spec.metadata["changelog_uri"] = "TODO: Put your gem's CHANGELOG.md URL here."
+    spec.metadata['changelog_uri'] = 'https://bitbucket.org/legion-io/lex-conditioner/src/master/CHANGELOG.md'
   end
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
@@ -26,9 +26,11 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'legionio'
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'simplecov'
 
   spec.add_dependency 'legion-exceptions'
 end

@@ -34,7 +34,7 @@ module Legion
           values[fact].is_a? String
         end
 
-        def self.is_integer?(fact, values)
+        def self.is_integer?(fact, values) # rubocop:disable Naming/PredicateName
           values[fact].is_a? Integer
         end
       end

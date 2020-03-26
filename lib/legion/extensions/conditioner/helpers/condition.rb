@@ -27,7 +27,7 @@ module Legion
           target
         end
 
-        def validate_vars
+        def validate_vars # rubocop:disable Metrics/CyclomaticComplexity
           raise Legion::Exception::MissingArgument, '@conditions is nil' if @conditions.nil?
           raise Legion::Exception::MissingArgument, '@values is nil' if @values.nil?
           raise Legion::Exception::MissingArgument, '@task_id is nil' if @task_id.nil?
@@ -36,7 +36,7 @@ module Legion
           raise Legion::Exception::WrongType::Hash, @conditions.class unless @conditions.is_a? Hash
         end
 
-        def validate_test(conditions = @conditions)
+        def validate_test(conditions = @conditions) # rubocop:disable Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/AbcSize
           conditions.each do |condition|
             condition[1].each do |rule|
               result = validate_test('conditions' => { 'all' => rule[:all] }) if rule.include? :all

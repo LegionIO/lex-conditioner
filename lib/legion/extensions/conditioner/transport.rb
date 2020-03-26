@@ -5,8 +5,8 @@ module Legion::Extensions::Conditioner
     extend Legion::Extensions::Transport
     def self.additional_e_to_q
       [
-          { from: 'task', to: 'conditioner', routing_key: 'task.subtask' },
-          { from: 'task', to: 'conditioner', routing_key: 'task.subtask.conditioner' }
+        { from: 'task', to: 'conditioner', routing_key: 'task.subtask' },
+        { from: 'task', to: 'conditioner', routing_key: 'task.subtask.conditioner' }
       ]
     end
   end
