@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    lex-conditioner (0.2.1)
+    lex-conditioner (0.2.2)
       legion-exceptions
 
 GEM
