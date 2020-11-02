@@ -7,7 +7,6 @@ module Legion
         def initialize(args)
           @conditions = Legion::JSON.load(args[:conditions])
           @values = to_dotted_hash(args[:values])
-          @task_id = args[:task_id]
         end
 
         def to_dotted_hash(source, target = {}, namespace = nil)
@@ -30,13 +29,11 @@ module Legion
         def validate_vars
           raise Legion::Exception::MissingArgument, '@conditions is nil' if @conditions.nil?
           raise Legion::Exception::MissingArgument, '@values is nil' if @values.nil?
-          raise Legion::Exception::MissingArgument, '@task_id is nil' if @task_id.nil?
           raise Legion::Exception::WrongType::Hash, @values.class unless @values.is_a? Hash
-          raise Legion::Exception::WrongType::Integer, @task_id.class unless @task_id.is_a? Integer
           raise Legion::Exception::WrongType::Hash, @conditions.class unless @conditions.is_a? Hash
         end
 
-        def validate_test(conditions = @conditions) # rubocop:disable Metrics/PerceivedComplexity,Metrics/CyclomaticComplexity,Metrics/AbcSize
+        def validate_test(conditions = @conditions) # rubocop:disable Metrics/AbcSize
           conditions.each do |condition|
             condition[1].each do |rule|
               result = validate_test('conditions' => { 'all' => rule[:all] }) if rule.include? :all

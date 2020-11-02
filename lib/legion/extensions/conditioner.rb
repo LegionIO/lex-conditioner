@@ -1,10 +1,9 @@
 require 'legion/extensions/conditioner/version'
-require 'legion/extensions'
 
 module Legion
   module Extensions
     module Conditioner
-      extend Legion::Extensions::Core
+      extend Legion::Extensions::Core if Legion::Extensions.const_defined? :Core
     end
   end
 end
