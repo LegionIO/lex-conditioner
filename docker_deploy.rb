@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
+name = 'conditioner'
 require "./lib/legion/extensions/#{name}/version"
 version = Legion::Extensions::Conditioner::VERSION
-name = 'conditioner'
 
 puts "Building docker image for Legion v#{version}"
 system("docker build --tag legionio/lex-#{name}:v#{version} .")
