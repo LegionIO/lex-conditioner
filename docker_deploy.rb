@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 
+require "./lib/legion/extensions/#{name}/version"
 version = Legion::Extensions::Conditioner::VERSION
 name = 'conditioner'
 
-require "./lib/legion/extensions/#{name}/version"
 puts "Building docker image for Legion v#{version}"
 system("docker build --tag legionio/lex-#{name}:v#{version} .")
 puts 'Pushing to hub.docker.com'
