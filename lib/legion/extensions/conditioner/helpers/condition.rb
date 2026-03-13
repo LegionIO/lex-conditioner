@@ -55,8 +55,8 @@ module Legion
         end
 
         def evaluate_rule(rule)
-          return validate_test('conditions' => { 'all' => rule[:all] }) if rule.include?(:all)
-          return validate_test('conditions' => { 'any' => rule[:any] }) if rule.include?(:any)
+          return validate_test(all: rule[:all]) if rule.include?(:all)
+          return validate_test(any: rule[:any]) if rule.include?(:any)
 
           comp = Legion::Extensions::Conditioner::Comparator
           op = rule[:operator]

@@ -159,7 +159,7 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
   end
 
   describe '#valid? with nested conditions' do
-    it 'handles nested all within any (known bug: string/symbol key mismatch in recursion)' do
+    it 'handles nested all within any' do
       cond = described_class.new(
         conditions: Legion::JSON.dump({ any: [
                                         { all: [
@@ -169,9 +169,33 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
                                       ] }),
         values:     { a: 1, b: 2 }
       )
-      # evaluate_rule recursion passes string keys ('all') but validate_test
-      # checks symbol keys (:all/:any), causing a TypeError
-      expect { cond.valid? }.to raise_error(TypeError)
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'returns false when nested all fails' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ any: [
+                                        { all: [
+                                          { fact: 'a', operator: 'equal', value: 1 },
+                                          { fact: 'b', operator: 'equal', value: 99 }
+                                        ] }
+                                      ] }),
+        values:     { a: 1, b: 2 }
+      )
+      expect(cond.valid?).to eq(false)
+    end
+
+    it 'handles nested any within all' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [
+                                        { any: [
+                                          { fact: 'x', operator: 'equal', value: 10 },
+                                          { fact: 'y', operator: 'equal', value: 20 }
+                                        ] }
+                                      ] }),
+        values:     { x: 99, y: 20 }
+      )
+      expect(cond.valid?).to eq(true)
     end
   end
 
