@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'legion/json'
 require 'legion/extensions/conditioner/helpers/condition'
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe Legion::Extensions::Conditioner::Condition do
   describe '#to_dotted_hash' do
     let(:condition) do
@@ -222,3 +223,4 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
