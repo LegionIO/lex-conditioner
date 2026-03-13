@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'legion/extensions/conditioner/version'
 
 module Legion

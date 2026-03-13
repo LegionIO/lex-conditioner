@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Legion
   module Extensions
     module Conditioner
@@ -18,23 +20,23 @@ module Legion
           !values[fact].nil?
         end
 
-        def self.is_false?(fact, values) # rubocop:disable Naming/PredicateName
+        def self.is_false?(fact, values)
           true unless values[fact]
         end
 
-        def self.is_true?(fact, values) # rubocop:disable Naming/PredicateName
+        def self.is_true?(fact, values)
           values[fact]
         end
 
-        def self.is_array?(fact, values) # rubocop:disable Naming/PredicateName
+        def self.is_array?(fact, values)
           !values[fact]
         end
 
-        def self.is_string?(fact, values) # rubocop:disable Naming/PredicateName
+        def self.is_string?(fact, values)
           values[fact].is_a? String
         end
 
-        def self.is_integer?(fact, values) # rubocop:disable Naming/PredicateName
+        def self.is_integer?(fact, values)
           values[fact].is_a? Integer
         end
       end

@@ -1,16 +1,22 @@
-module Legion::Extensions::Conditioner
-  module Actor
-    class Conditioner < Legion::Extensions::Actors::Subscription
-      def runner_function
-        'check'
-      end
+# frozen_string_literal: true
 
-      def check_subtask?
-        false
-      end
+module Legion
+  module Extensions
+    module Conditioner
+      module Actor
+        class Conditioner < Legion::Extensions::Actors::Subscription
+          def runner_function
+            'check'
+          end
 
-      def generate_task?
-        false
+          def check_subtask?
+            false
+          end
+
+          def generate_task?
+            false
+          end
+        end
       end
     end
   end

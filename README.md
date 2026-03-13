@@ -1,38 +1,51 @@
-# Legion::Extensions::Conditioner
+# lex-conditioner
 
-A core Legion Extension used to evaluate conditions for sub tasks to run
+Conditional rule engine for [LegionIO](https://github.com/LegionIO/LegionIO). Evaluates JSON-based rules against task payloads to determine whether downstream tasks should execute, enabling branching logic in task chains.
+
+This is a core LEX required for task relationship conditions.
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'lex-conditioner'
-```
-
-And then execute:
-
-    $ bundle install
-
-Or install it yourself as:
-
-    $ gem install lex-conditioner
-
-## Adding to Legion
-You can manually install with a `gem install lex-http` command or by adding it into your settings with something like this
-```json
-{
-  "extensions": {
-    "conditioner": {
-      "enabled": true, "workers": 1
-    }
-  }
-}
+```bash
+gem install lex-conditioner
 ```
 
 ## Usage
 
+Conditions use a JSON rule format with `all`/`any` grouping and `fact`/`operator`/`value` comparisons:
+
+```json
+{
+  "all": [
+    { "fact": "pet.type", "value": "dog", "operator": "equal" },
+    { "fact": "pet.hungry", "operator": "is_true" }
+  ]
+}
+```
+
+Conditions can be nested to create complex and/or scenarios:
+
+```json
+{
+  "all": [
+    { "any": [
+      { "fact": "pet.type", "value": "dog", "operator": "equal" },
+      { "fact": "pet.type", "value": "cat", "operator": "equal" }
+    ]},
+    { "fact": "pet.hungry", "operator": "is_true" }
+  ]
+}
+```
+
+### Operators
+
+`equal`, `not_equal`, `greater_than`, `less_than`, `contains`, `is_true`, `is_false`, and more.
+
+## Requirements
+
+- Ruby >= 3.4
+- [LegionIO](https://github.com/LegionIO/LegionIO) framework
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+MIT

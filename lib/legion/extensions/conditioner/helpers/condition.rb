@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'comparator'
 
 module Legion
@@ -33,7 +35,7 @@ module Legion
           raise Legion::Exception::WrongType::Hash, @conditions.class unless @conditions.is_a? Hash
         end
 
-        def validate_test(conditions = @conditions) # rubocop:disable Metrics/AbcSize
+        def validate_test(conditions = @conditions)
           conditions.each do |condition|
             condition[1].each do |rule|
               result = validate_test('conditions' => { 'all' => rule[:all] }) if rule.include? :all
