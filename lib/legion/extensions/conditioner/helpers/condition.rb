@@ -35,37 +35,37 @@ module Legion
           raise Legion::Exception::WrongType::Hash, @conditions.class unless @conditions.is_a? Hash
         end
 
+        BINARY_OPS = %w[equal not_equal].freeze
+        UNARY_OPS = %w[nil not_nil is_false is_true is_string is_array is_integer].freeze
+        UNARY_METHOD_MAP = {
+          'is_false' => :false?, 'is_true' => :true?,
+          'is_string' => :string?, 'is_array' => :array?, 'is_integer' => :integer?
+        }.freeze
+
         def validate_test(conditions = @conditions)
           conditions.each do |condition|
             condition[1].each do |rule|
-              result = validate_test('conditions' => { 'all' => rule[:all] }) if rule.include? :all
-              result = validate_test('conditions' => { 'any' => rule[:any] }) if rule.include? :any
-              case rule[:operator]
-              when 'equal'
-                result = Legion::Extensions::Conditioner::Comparator.equal?(rule[:fact], rule[:value], @values)
-              when 'not_equal'
-                result = Legion::Extensions::Conditioner::Comparator.not_equal?(rule[:fact], rule[:value], @values)
-              when 'nil'
-                result = Legion::Extensions::Conditioner::Comparator.nil?(rule[:fact], @values)
-              when 'not_nil'
-                result = Legion::Extensions::Conditioner::Comparator.not_nil?(rule[:fact], @values)
-              when 'is_false'
-                result = Legion::Extensions::Conditioner::Comparator.is_false?(rule[:fact], @values)
-              when 'is_true'
-                result = Legion::Extensions::Conditioner::Comparator.is_true?(rule[:fact], @values)
-              when 'is_string'
-                result = Legion::Extensions::Conditioner::Comparator.is_string?(rule[:fact], @values)
-              when 'is_array'
-                result = Legion::Extensions::Conditioner::Comparator.is_array?(rule[:fact], @values)
-              when 'is_integer'
-                result = Legion::Extensions::Conditioner::Comparator.is_integer?(rule[:fact], @values)
-              end
-
+              result = evaluate_rule(rule)
               return true if condition[0] == :any && result == true
               return false if condition[0] == :all && result == false
             end
             return false if condition[0] == :any
             return true if condition[0] == :all
+          end
+        end
+
+        def evaluate_rule(rule)
+          return validate_test('conditions' => { 'all' => rule[:all] }) if rule.include?(:all)
+          return validate_test('conditions' => { 'any' => rule[:any] }) if rule.include?(:any)
+
+          comp = Legion::Extensions::Conditioner::Comparator
+          op = rule[:operator]
+
+          if BINARY_OPS.include?(op)
+            comp.send(:"#{op}?", rule[:fact], rule[:value], @values)
+          elsif UNARY_OPS.include?(op)
+            method_name = UNARY_METHOD_MAP[op] || :"#{op}?"
+            comp.send(method_name, rule[:fact], @values)
           end
         end
 

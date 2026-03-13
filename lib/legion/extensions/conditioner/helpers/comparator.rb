@@ -20,23 +20,23 @@ module Legion
           !values[fact].nil?
         end
 
-        def self.is_false?(fact, values)
+        def self.false?(fact, values)
           true unless values[fact]
         end
 
-        def self.is_true?(fact, values)
+        def self.true?(fact, values)
           values[fact]
         end
 
-        def self.is_array?(fact, values)
-          !values[fact]
+        def self.array?(fact, values)
+          values[fact].is_a? Array
         end
 
-        def self.is_string?(fact, values)
+        def self.string?(fact, values)
           values[fact].is_a? String
         end
 
-        def self.is_integer?(fact, values)
+        def self.integer?(fact, values)
           values[fact].is_a? Integer
         end
       end
