@@ -63,10 +63,10 @@ Rules use `all`/`any` grouping with `fact`/`operator`/`value` entries. Facts use
 ## Condition Evaluation Logic
 
 After evaluation, the runner sets task status based on outcome:
-- Condition passes + transformation present: `transformation.queued`
-- Condition passes + routing key present: `task.queued`
-- Condition passes but no routing info: `task.exception`
-- Condition fails: `conditioner.failed`
+- Condition passes + transformation present: `transformation.queued` (routes to `task.subtask.transform`)
+- Condition passes + routing key present: `task.queued` (routes to `runner_routing_key`)
+- Condition passes but no routing info: `task.exception` (`send_task` is still called and raises `MissingArgument`)
+- Condition fails: `conditioner.failed` (`send_task` is skipped)
 
 ## Dependencies
 
@@ -82,7 +82,7 @@ bundle exec rspec
 bundle exec rubocop
 ```
 
-Spec files: `spec/legion/extensions/conditioner_spec.rb`, `spec/legion/extensions/comparator_spec.rb`, `spec/legion/extensions/condition_spec.rb`
+Spec files: `spec/legion/extensions/conditioner_spec.rb`, `spec/legion/extensions/comparator_spec.rb`, `spec/legion/extensions/condition_spec.rb`, `spec/legion/extensions/conditioner/runners/conditioner_spec.rb`
 
 ---
 
