@@ -21,7 +21,7 @@ module Legion
         end
 
         def self.false?(fact, values)
-          true unless values[fact]
+          values[fact] ? false : true
         end
 
         def self.true?(fact, values)

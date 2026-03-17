@@ -69,8 +69,8 @@ RSpec.describe Legion::Extensions::Conditioner::Comparator do
       expect(described_class.false?('empty', values)).to eq(true)
     end
 
-    it 'returns nil when fact is truthy' do
-      expect(described_class.false?('flag', values)).to be_nil
+    it 'returns false when fact is truthy' do
+      expect(described_class.false?('flag', values)).to eq(false)
     end
   end
 
