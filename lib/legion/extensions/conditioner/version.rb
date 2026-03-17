@@ -3,7 +3,7 @@
 module Legion
   module Extensions
     module Conditioner
-      VERSION = '0.3.1'
+      VERSION = '0.3.0'
     end
   end
 end
