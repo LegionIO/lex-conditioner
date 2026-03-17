@@ -221,4 +221,154 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
       expect(cond.valid?).to eq(true)
     end
   end
+
+  describe '#valid? with numeric operators' do
+    it 'handles greater_than operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'score', operator: 'greater_than', value: 50 }] }),
+        values:     { score: 75 }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'returns false for greater_than when equal' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'score', operator: 'greater_than', value: 75 }] }),
+        values:     { score: 75 }
+      )
+      expect(cond.valid?).to eq(false)
+    end
+
+    it 'handles less_than operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'count', operator: 'less_than', value: 10 }] }),
+        values:     { count: 3 }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles greater_or_equal operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'status', operator: 'greater_or_equal', value: 200 }] }),
+        values:     { status: 200 }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles less_or_equal operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'count', operator: 'less_or_equal', value: 5 }] }),
+        values:     { count: 5 }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles between operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'status', operator: 'between', value: [200, 299] }] }),
+        values:     { status: 201 }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'returns false for between when out of range' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'status', operator: 'between', value: [200, 299] }] }),
+        values:     { status: 404 }
+      )
+      expect(cond.valid?).to eq(false)
+    end
+  end
+
+  describe '#valid? with string operators' do
+    it 'handles contains operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'message', operator: 'contains', value: 'error' }] }),
+        values:     { message: 'critical error occurred' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'returns false for contains when substring absent' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'message', operator: 'contains', value: 'success' }] }),
+        values:     { message: 'critical error occurred' }
+      )
+      expect(cond.valid?).to eq(false)
+    end
+
+    it 'handles starts_with operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'path', operator: 'starts_with', value: '/api' }] }),
+        values:     { path: '/api/v1/users' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles ends_with operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'filename', operator: 'ends_with', value: '.rb' }] }),
+        values:     { filename: 'comparator.rb' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles matches operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'email', operator: 'matches', value: '.+@.+\..+' }] }),
+        values:     { email: 'user@example.com' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+  end
+
+  describe '#valid? with collection operators' do
+    it 'handles in_set operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'env', operator: 'in_set', value: %w[staging production] }] }),
+        values:     { env: 'production' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'returns false for in_set when value absent' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'env', operator: 'in_set', value: %w[staging production] }] }),
+        values:     { env: 'development' }
+      )
+      expect(cond.valid?).to eq(false)
+    end
+
+    it 'handles not_in_set operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'env', operator: 'not_in_set', value: %w[staging production] }] }),
+        values:     { env: 'development' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles empty operator for nil fact' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'missing', operator: 'empty' }] }),
+        values:     { other: 'value' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles not_empty operator for present fact' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'name', operator: 'not_empty' }] }),
+        values:     { name: 'legion' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+
+    it 'handles size_equal operator' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'label', operator: 'size_equal', value: 4 }] }),
+        values:     { label: 'test' }
+      )
+      expect(cond.valid?).to eq(true)
+    end
+  end
 end

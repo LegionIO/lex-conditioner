@@ -35,11 +35,13 @@ module Legion
           raise Legion::Exception::WrongType::Hash, @conditions.class unless @conditions.is_a? Hash
         end
 
-        BINARY_OPS = %w[equal not_equal].freeze
-        UNARY_OPS = %w[nil not_nil is_false is_true is_string is_array is_integer].freeze
+        BINARY_OPS = %w[equal not_equal greater_than less_than greater_or_equal less_or_equal between contains starts_with ends_with matches in_set not_in_set
+                        size_equal].freeze
+        UNARY_OPS = %w[nil not_nil is_false is_true is_string is_array is_integer empty not_empty].freeze
         UNARY_METHOD_MAP = {
           'is_false' => :false?, 'is_true' => :true?,
-          'is_string' => :string?, 'is_array' => :array?, 'is_integer' => :integer?
+          'is_string' => :string?, 'is_array' => :array?, 'is_integer' => :integer?,
+          'empty' => :empty?, 'not_empty' => :not_empty?
         }.freeze
 
         def validate_test(conditions = @conditions)
