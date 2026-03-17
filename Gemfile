@@ -4,8 +4,11 @@ source 'https://rubygems.org'
 
 gemspec
 
-gem 'legionio'
-gem 'rake'
-gem 'rspec'
-gem 'rubocop'
-gem 'simplecov'
+group :test do
+  gem 'rake'
+  gem 'rspec', '~> 3.13'
+  gem 'rspec_junit_formatter'
+  gem 'rubocop', '~> 1.75'
+  gem 'rubocop-rspec'
+  gem 'simplecov'
+end

@@ -3,7 +3,6 @@
 require 'spec_helper'
 require 'legion/extensions/conditioner/helpers/comparator'
 
-# rubocop:disable Metrics/BlockLength
 RSpec.describe Legion::Extensions::Conditioner::Comparator do
   let(:values) { { 'status' => 200, 'name' => 'test', 'items' => [1, 2], 'flag' => true, 'empty' => nil, 'count' => 5 } }
 
@@ -105,5 +104,3 @@ RSpec.describe Legion::Extensions::Conditioner::Comparator do
     end
   end
 end
-
-# rubocop:enable Metrics/BlockLength

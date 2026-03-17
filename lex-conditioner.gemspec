@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-lib = File.expand_path('lib', __dir__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'legion/extensions/conditioner/version'
+require_relative 'lib/legion/extensions/conditioner/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'lex-conditioner'
@@ -10,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Esity']
   spec.email         = ['matthewdiverson@gmail.com']
 
-  spec.summary       = 'LEX-Conditioner is used to apply conditional statements to tasks'
-  spec.description   = 'Runs relationship conditional statements against tasks in a relationship'
+  spec.summary       = 'Conditional rule engine for LegionIO task chains'
+  spec.description   = 'Evaluates JSON-based rules against task payloads with 18+ operators, structured explanations, and standalone client support'
   spec.homepage      = 'https://github.com/LegionIO/lex-conditioner'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 3.4'
@@ -19,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/LegionIO/lex-conditioner'
   spec.metadata['documentation_uri'] = 'https://github.com/LegionIO/lex-conditioner'
-  spec.metadata['changelog_uri'] = 'https://github.com/LegionIO/lex-conditioner'
+  spec.metadata['changelog_uri'] = 'https://github.com/LegionIO/lex-conditioner/blob/main/CHANGELOG.md'
   spec.metadata['bug_tracker_uri'] = 'https://github.com/LegionIO/lex-conditioner/issues'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
@@ -27,6 +25,4 @@ Gem::Specification.new do |spec|
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   end
   spec.require_paths = ['lib']
-
-  spec.add_dependency 'legion-exceptions'
 end

@@ -6,36 +6,37 @@ require 'legion/extensions/conditioner/helpers/comparator'
 require 'legion/extensions/conditioner/helpers/condition'
 
 # Stub framework helpers that the runner includes at load time
-module Legion
-  module Extensions
-    module Helpers
-      module Lex; end
-      module Task; end
-    end
-  end
-
-  module Transport
-    module Messages
-      class SubTask
-        def initialize(**); end
-        def publish; end
+unless defined?(Legion::Extensions::Helpers::Lex)
+  module Legion
+    module Extensions
+      module Helpers
+        module Lex; end
+        module Task; end
       end
     end
-  end
 
-  module Logging
-    def self.error(*); end
-    def self.warn(*); end
-  end
+    module Transport
+      module Messages
+        class SubTask
+          def initialize(**); end
+          def publish; end
+        end
+      end
+    end
 
-  module Exception
-    class MissingArgument < StandardError; end
+    module Logging
+      def self.error(*); end
+      def self.warn(*); end
+    end
+
+    module Exception
+      class MissingArgument < StandardError; end
+    end
   end
-end unless defined?(Legion::Extensions::Helpers::Lex)
+end
 
 require 'legion/extensions/conditioner/runners/conditioner'
 
-# rubocop:disable Metrics/BlockLength
 RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
   let(:runner) do
     klass = Class.new do
@@ -57,8 +58,8 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     context 'when condition passes and transformation is present' do
       let(:payload) do
         {
-          conditions:   conditions_for(all: [{ fact: 'status', operator: 'equal', value: 200 }]),
-          status:       200,
+          conditions:     conditions_for(all: [{ fact: 'status', operator: 'equal', value: 200 }]),
+          status:         200,
           transformation: '{"key":"value"}'
         }
       end
@@ -77,8 +78,8 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     context 'when condition passes and runner_routing_key is present' do
       let(:payload) do
         {
-          conditions:        conditions_for(all: [{ fact: 'status', operator: 'equal', value: 200 }]),
-          status:            200,
+          conditions:         conditions_for(all: [{ fact: 'status', operator: 'equal', value: 200 }]),
+          status:             200,
           runner_routing_key: 'ext.runner.func'
         }
       end
@@ -135,9 +136,9 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     context 'when task_id is present' do
       let(:payload) do
         {
-          conditions:        conditions_for(all: [{ fact: 'x', operator: 'equal', value: 1 }]),
-          x:                 1,
-          task_id:           42,
+          conditions:         conditions_for(all: [{ fact: 'x', operator: 'equal', value: 1 }]),
+          x:                  1,
+          task_id:            42,
           runner_routing_key: 'ext.runner.func'
         }
       end
@@ -165,11 +166,11 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     context 'when debug is true and task_id is present' do
       let(:payload) do
         {
-          conditions:        conditions_for(all: [{ fact: 'x', operator: 'equal', value: 1 }]),
-          x:                 1,
-          task_id:           7,
+          conditions:         conditions_for(all: [{ fact: 'x', operator: 'equal', value: 1 }]),
+          x:                  1,
+          task_id:            7,
           runner_routing_key: 'ext.runner.func',
-          debug:             true
+          debug:              true
         }
       end
 
@@ -236,4 +237,3 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength
