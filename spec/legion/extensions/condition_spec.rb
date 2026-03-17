@@ -322,6 +322,98 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
     end
   end
 
+  describe '#explain' do
+    it 'returns structured explanation for passing all condition' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'status', operator: 'equal', value: 200 }] }),
+        values:     { status: 200 }
+      )
+      result = cond.explain
+      expect(result[:valid]).to eq(true)
+      expect(result[:group]).to eq(:all)
+      expect(result[:rules]).to be_an(Array)
+      rule = result[:rules].first
+      expect(rule[:fact]).to eq('status')
+      expect(rule[:operator]).to eq('equal')
+      expect(rule[:value]).to eq(200)
+      expect(rule[:actual]).to eq(200)
+      expect(rule[:result]).to eq(true)
+    end
+
+    it 'returns structured explanation for failing condition' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'status', operator: 'equal', value: 404 }] }),
+        values:     { status: 200 }
+      )
+      result = cond.explain
+      expect(result[:valid]).to eq(false)
+      rule = result[:rules].first
+      expect(rule[:result]).to eq(false)
+      expect(rule[:actual]).to eq(200)
+    end
+
+    it 'includes all rules even when short-circuiting would stop early' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [
+                                        { fact: 'a', operator: 'equal', value: 1 },
+                                        { fact: 'b', operator: 'equal', value: 99 },
+                                        { fact: 'c', operator: 'equal', value: 3 }
+                                      ] }),
+        values:     { a: 1, b: 2, c: 3 }
+      )
+      result = cond.explain
+      expect(result[:valid]).to eq(false)
+      expect(result[:rules].length).to eq(3)
+      expect(result[:rules][0][:result]).to eq(true)
+      expect(result[:rules][1][:result]).to eq(false)
+      expect(result[:rules][2][:result]).to eq(true)
+    end
+
+    it 'handles nested groups with any containing all' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ any: [
+                                        { all: [
+                                          { fact: 'x', operator: 'equal', value: 1 },
+                                          { fact: 'y', operator: 'equal', value: 2 }
+                                        ] }
+                                      ] }),
+        values:     { x: 1, y: 2 }
+      )
+      result = cond.explain
+      expect(result[:valid]).to eq(true)
+      expect(result[:group]).to eq(:any)
+      nested = result[:rules].first
+      expect(nested[:group]).to eq(:all)
+      expect(nested[:rules]).to be_an(Array)
+      expect(nested[:result]).to eq(true)
+    end
+
+    it 'explains unary operators without a value key' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'name', operator: 'not_nil' }] }),
+        values:     { name: 'present' }
+      )
+      result = cond.explain
+      rule = result[:rules].first
+      expect(rule[:fact]).to eq('name')
+      expect(rule[:operator]).to eq('not_nil')
+      expect(rule[:result]).to eq(true)
+      expect(rule).not_to have_key(:value)
+    end
+
+    it 'explains greater_than operator with actual value' do
+      cond = described_class.new(
+        conditions: Legion::JSON.dump({ all: [{ fact: 'score', operator: 'greater_than', value: 50 }] }),
+        values:     { score: 75 }
+      )
+      result = cond.explain
+      rule = result[:rules].first
+      expect(rule[:operator]).to eq('greater_than')
+      expect(rule[:actual]).to eq(75)
+      expect(rule[:result]).to eq(true)
+    end
+  end
+
   describe '#valid? with collection operators' do
     it 'handles in_set operator' do
       cond = described_class.new(

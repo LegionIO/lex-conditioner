@@ -75,6 +75,37 @@ module Legion
           @valid = validate_test if @valid.nil?
           @valid
         end
+
+        def explain_test(conditions = @conditions)
+          group = conditions.keys.first
+          rules = conditions[group].map do |rule|
+            explain_rule(rule)
+          end
+
+          valid = group == :all ? rules.all? { |r| r[:result] } : rules.any? { |r| r[:result] }
+          { valid: valid, group: group, rules: rules }
+        end
+
+        def explain_rule(rule)
+          if rule.include?(:all)
+            result = explain_test(all: rule[:all])
+            return { group: :all, rules: result[:rules], result: result[:valid] }
+          end
+          if rule.include?(:any)
+            result = explain_test(any: rule[:any])
+            return { group: :any, rules: result[:rules], result: result[:valid] }
+          end
+
+          result = evaluate_rule(rule)
+          explanation = { fact: rule[:fact], operator: rule[:operator], result: result }
+          explanation[:value] = rule[:value] if rule.key?(:value)
+          explanation[:actual] = @values[rule[:fact]]
+          explanation
+        end
+
+        def explain
+          @explain ||= explain_test
+        end
       end
     end
   end

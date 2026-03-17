@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1] - 2026-03-17
+
+### Added
+- `Condition#explain` method returns structured per-rule explanation with `fact`, `operator`, `value`, `actual`, and `result` for each rule
+- `Condition#explain_test` evaluates all rules without short-circuiting, producing complete explanation trees
+- `Condition#explain_rule` handles nested `all`/`any` groups recursively, and omits `value` key for unary operators
+- Six new specs covering passing, failing, full evaluation (no short-circuit), nested groups, unary operators, and numeric operators
+
 ## [0.3.0] - 2026-03-17
 
 ### Added
