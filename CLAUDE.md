@@ -10,7 +10,7 @@ Legion Extension that applies conditional statements to tasks within relationshi
 
 **GitHub**: https://github.com/LegionIO/lex-conditioner
 **License**: MIT
-**Version**: 0.2.5
+**Version**: 0.3.0
 
 ## Architecture
 
