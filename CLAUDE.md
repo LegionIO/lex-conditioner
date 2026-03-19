@@ -43,30 +43,76 @@ Legion::Extensions::Conditioner
 
 ## Condition Rule Format
 
-Rules use `all`/`any` grouping with `fact`/`operator`/`value` entries. Facts use dot notation to address nested payload keys.
+Rules use `all`/`any` grouping with `fact`/`operator`/`value` entries. Facts use dot notation to address nested payload keys. Groups can be nested arbitrarily.
 
-### Operators
+```json
+{
+  "all": [
+    { "fact": "response.code", "operator": "greater_or_equal", "value": 200 },
+    { "any": [
+      { "fact": "action", "operator": "equal", "value": "opened" },
+      { "fact": "action", "operator": "equal", "value": "reopened" }
+    ]}
+  ]
+}
+```
 
-**Binary** (require `fact` + `value`):
-- `equal` - exact equality
-- `not_equal` - inequality
+## Operators
 
-**Unary** (require `fact` only):
-- `nil` - value is nil
-- `not_nil` - value is not nil
-- `is_true` - value is truthy
-- `is_false` - value is falsy
-- `is_string` - value is a String
-- `is_array` - value is an Array
-- `is_integer` - value is an Integer
+### Binary (require `fact` + `value`)
+
+| Operator | Description |
+|----------|-------------|
+| `equal` | Exact equality |
+| `not_equal` | Inequality |
+| `greater_than` | Numeric greater than |
+| `less_than` | Numeric less than |
+| `greater_or_equal` | Numeric greater than or equal |
+| `less_or_equal` | Numeric less than or equal |
+| `between` | Value within range (`value` is `[min, max]`) |
+| `contains` | String contains substring |
+| `starts_with` | String starts with prefix |
+| `ends_with` | String ends with suffix |
+| `matches` | String matches regex pattern |
+| `in_set` | Value is in the given array |
+| `not_in_set` | Value is not in the given array |
+| `size_equal` | Collection or string size equals value |
+
+### Unary (require `fact` only)
+
+| Operator | Description |
+|----------|-------------|
+| `nil` | Value is nil |
+| `not_nil` | Value is not nil |
+| `is_true` | Value is truthy |
+| `is_false` | Value is falsy |
+| `is_string` | Value is a String |
+| `is_array` | Value is an Array |
+| `is_integer` | Value is an Integer |
+| `empty` | Value is nil or empty |
+| `not_empty` | Value is present and not empty |
 
 ## Condition Evaluation Logic
 
-After evaluation, the runner sets task status based on outcome:
+After evaluation, the runner routes based on outcome:
 - Condition passes + transformation present: `transformation.queued` (routes to `task.subtask.transform`)
 - Condition passes + routing key present: `task.queued` (routes to `runner_routing_key`)
-- Condition passes but no routing info: `task.exception` (`send_task` is still called and raises `MissingArgument`)
+- Condition passes but no routing info: `task.exception` (`send_task` raises `MissingArgument`)
 - Condition fails: `conditioner.failed` (`send_task` is skipped)
+
+Each evaluation also returns an explanation chain with per-rule results including actual values, for use by lex-synapse and standalone callers.
+
+## Standalone Client
+
+`Legion::Extensions::Conditioner::Client` includes the `Conditioner` runner. Instantiate without the full framework:
+
+```ruby
+require 'legion/extensions/conditioner/client'
+client = Legion::Extensions::Conditioner::Client.new
+result = client.evaluate(conditions: { all: [...] }, values: { ... })
+result[:valid]        # => true/false
+result[:explanation]  # => per-rule results with actual values
+```
 
 ## Dependencies
 
@@ -78,8 +124,8 @@ After evaluation, the runner sets task status based on outcome:
 
 ```bash
 bundle install
-bundle exec rspec
-bundle exec rubocop
+bundle exec rspec     # 140 examples, 0 failures
+bundle exec rubocop   # 0 offenses
 ```
 
 Spec files: `spec/legion/extensions/conditioner_spec.rb`, `spec/legion/extensions/comparator_spec.rb`, `spec/legion/extensions/condition_spec.rb`, `spec/legion/extensions/conditioner/runners/conditioner_spec.rb`
