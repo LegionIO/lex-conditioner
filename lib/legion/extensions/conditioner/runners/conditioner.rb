@@ -35,9 +35,9 @@ module Legion
 
             { success: true, valid: conditioner.valid? }
           rescue StandardError => e
-            Legion::Logging.error 'LEX::Conditioner::Runners::Condition had an exception'
-            Legion::Logging.warn e.message
-            Legion::Logging.warn e.backtrace
+            log.error 'LEX::Conditioner::Runners::Condition had an exception'
+            log.warn e.message
+            log.warn e.backtrace
             task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
           end
 

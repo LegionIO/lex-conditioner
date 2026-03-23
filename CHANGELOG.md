@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1] - 2026-03-22
+
+### Changed
+- Migrated to sub-gem helpers (Tier 1): added runtime dependencies on legion-cache >= 1.3.11, legion-crypt >= 1.4.9, legion-data >= 1.4.17, legion-json >= 1.2.1, legion-logging >= 1.3.2, legion-settings >= 1.3.14, legion-transport >= 1.3.9
+- Replaced direct `Legion::Logging` calls in runner with `log` helper method via `Helpers::Lex` (includes `Legion::Logging::Helper`)
+- Updated spec_helper to use real sub-gem helpers with `Helpers::Lex` module and actor stubs; removed inline Legion::Logging and Legion::JSON stubs
+- Updated runner spec to remove framework stubs covered by spec_helper; added scoped `Helpers::Task`, `Transport::Messages::SubTask`, and `Exception::MissingArgument` stubs
+
 ## [0.3.0] - 2026-03-17
 
 ### Added

@@ -4,37 +4,43 @@ require 'simplecov'
 SimpleCov.start
 
 require 'bundler/setup'
+require 'legion/logging'
+require 'legion/settings'
+require 'legion/cache/helper'
+require 'legion/crypt/helper'
+require 'legion/data/helper'
+require 'legion/json/helper'
+require 'legion/transport'
 
-unless defined?(Legion::Logging)
-  module Legion
-    module Logging
-      def self.info(*); end
-      def self.debug(*); end
-      def self.warn(*); end
-      def self.error(*); end
+module Legion
+  module Extensions
+    module Helpers
+      module Lex
+        include Legion::Logging::Helper
+        include Legion::Settings::Helper
+        include Legion::Cache::Helper
+        include Legion::Crypt::Helper
+        include Legion::Data::Helper
+        include Legion::JSON::Helper
+        include Legion::Transport::Helper
+      end
+    end
+
+    module Actors
+      class Every
+        include Helpers::Lex
+      end
+
+      class Once
+        include Helpers::Lex
+      end
+
+      class Subscription
+        include Helpers::Lex
+      end
     end
   end
 end
-
-$LOADED_FEATURES << 'legion/logging' unless $LOADED_FEATURES.include?('legion/logging')
-
-unless defined?(Legion::JSON)
-  module Legion
-    module JSON
-      def self.load(str)
-        require 'json'
-        ::JSON.parse(str, symbolize_names: true)
-      end
-
-      def self.dump(obj)
-        require 'json'
-        ::JSON.generate(obj)
-      end
-    end
-  end
-end
-
-$LOADED_FEATURES << 'legion/json' unless $LOADED_FEATURES.include?('legion/json')
 
 RSpec.configure do |config|
   config.example_status_persistence_file_path = '.rspec_status'

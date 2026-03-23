@@ -1,37 +1,29 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'legion/json'
 require 'legion/extensions/conditioner/helpers/comparator'
 require 'legion/extensions/conditioner/helpers/condition'
 
-# Stub framework helpers that the runner includes at load time
-unless defined?(Legion::Extensions::Helpers::Lex)
-  module Legion
-    module Extensions
-      module Helpers
-        module Lex; end
-        module Task; end
-      end
+module Legion
+  module Extensions
+    module Helpers
+      module Task; end unless defined?(Legion::Extensions::Helpers::Task)
     end
+  end
 
-    module Transport
-      module Messages
+  module Transport
+    module Messages
+      unless defined?(Legion::Transport::Messages::SubTask)
         class SubTask
           def initialize(**); end
           def publish; end
         end
       end
     end
+  end
 
-    module Logging
-      def self.error(*); end
-      def self.warn(*); end
-    end
-
-    module Exception
-      class MissingArgument < StandardError; end
-    end
+  module Exception
+    class MissingArgument < StandardError; end unless defined?(Legion::Exception::MissingArgument)
   end
 end
 
