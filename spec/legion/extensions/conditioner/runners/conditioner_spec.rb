@@ -175,6 +175,7 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     context 'when an exception is raised during evaluation' do
       it 'logs the error and calls task_update with conditioner.exception' do
         allow(Legion::Extensions::Conditioner::Condition).to receive(:new).and_raise(StandardError, 'boom')
+        allow(runner).to receive_message_chain(:log, :log_exception)
         expect(runner).to receive(:task_update).with(5, 'conditioner.exception', anything)
         runner.check(conditions: '{}', task_id: 5)
       end
