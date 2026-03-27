@@ -3,7 +3,7 @@
 ## [0.3.2] - 2026-03-27
 
 ### Changed
-- Replace split `log.error(e.message); log.error(e.backtrace)` pattern with single `log.log_exception(e, component_type: :runner)` call for structured exception events
+- Replace prior pattern of `log.error '...had an exception'` followed by `log.warn e.message` and `log.warn e.backtrace` with a single `log.log_exception(e, component_type: :runner)` call for structured exception events
 - Update runner spec to assert `log_exception` is called with an explicit logger double instead of `receive_message_chain`; update example description to match asserted behaviour
 
 ## [0.3.1] - 2026-03-22
