@@ -35,8 +35,7 @@ module Legion
 
             { success: true, valid: conditioner.valid? }
           rescue StandardError => e
-            log_runner_exception(e)
-            Legion::Logging.error(e.message) unless respond_to?(:log) && log
+            log.log_exception(e, component_type: :runner)
             task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
           end
 
@@ -59,25 +58,6 @@ module Legion
 
           include Legion::Extensions::Helpers::Lex
           include Legion::Extensions::Helpers::Task
-
-          private
-
-          def log_runner_exception(exception)
-            return unless respond_to?(:log) && log
-
-            if log.respond_to?(:log_exception)
-              log.log_exception(exception, component_type: :runner)
-            elsif log.respond_to?(:error)
-              log.error("Unhandled exception in Conditioner::Runners::Conditioner#check: #{exception.class}: #{exception.message}")
-              if exception.backtrace
-                if log.respond_to?(:warn)
-                  log.warn(exception.backtrace.join("\n"))
-                else
-                  log.error(exception.backtrace.join("\n"))
-                end
-              end
-            end
-          end
         end
       end
     end

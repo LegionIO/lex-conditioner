@@ -173,25 +173,11 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     end
 
     context 'when an exception is raised during evaluation' do
-      it 'logs the error via log_exception and calls task_update with conditioner.exception' do
+      it 'logs via log.log_exception and calls task_update with conditioner.exception' do
         allow(Legion::Extensions::Conditioner::Condition).to receive(:new).and_raise(StandardError, 'boom')
         logger = double('Legion::Logging::Methods')
         allow(runner).to receive(:log).and_return(logger)
-        allow(logger).to receive(:respond_to?).with(:log_exception).and_return(true)
         expect(logger).to receive(:log_exception).with(instance_of(StandardError), component_type: :runner)
-        expect(runner).to receive(:task_update).with(5, 'conditioner.exception', anything)
-        runner.check(conditions: '{}', task_id: 5)
-      end
-
-      it 'falls back to log.error when log_exception is unavailable and calls task_update with conditioner.exception' do
-        allow(Legion::Extensions::Conditioner::Condition).to receive(:new).and_raise(StandardError, 'boom')
-        logger = double('Legion::Logging::Methods')
-        allow(runner).to receive(:log).and_return(logger)
-        allow(logger).to receive(:respond_to?).with(:log_exception).and_return(false)
-        allow(logger).to receive(:respond_to?).with(:error).and_return(true)
-        allow(logger).to receive(:respond_to?).with(:warn).and_return(true)
-        expect(logger).to receive(:error).with(a_string_including('boom'))
-        allow(logger).to receive(:warn)
         expect(runner).to receive(:task_update).with(5, 'conditioner.exception', anything)
         runner.check(conditions: '{}', task_id: 5)
       end
