@@ -39,17 +39,6 @@ module Legion
             task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
           end
 
-          def log_runner_exception(exception)
-            return unless respond_to?(:log) && log
-
-            if log.respond_to?(:log_exception)
-              log.log_exception(exception, component_type: :runner)
-            elsif log.respond_to?(:error)
-              log.error("Unhandled exception in Conditioner::Runners::Conditioner#check: #{exception.class}: #{exception.message}")
-              log.error(exception.backtrace.join("\n")) if exception.backtrace
-            end
-          end
-
           def send_task(**opts)
             subtask_hash = {}
             %i[runner_routing_key relationship_id chain_id trigger_runner_id trigger_function_id function_id function runner_id runner_class transformation debug task_id results].each do |column| # rubocop:disable Layout/LineLength
@@ -69,6 +58,25 @@ module Legion
 
           include Legion::Extensions::Helpers::Lex
           include Legion::Extensions::Helpers::Task
+
+          private
+
+          def log_runner_exception(exception)
+            return unless respond_to?(:log) && log
+
+            if log.respond_to?(:log_exception)
+              log.log_exception(exception, component_type: :runner)
+            elsif log.respond_to?(:error)
+              log.error("Unhandled exception in Conditioner::Runners::Conditioner#check: #{exception.class}: #{exception.message}")
+              if exception.backtrace
+                if log.respond_to?(:warn)
+                  log.warn(exception.backtrace.join("\n"))
+                else
+                  log.error(exception.backtrace.join("\n"))
+                end
+              end
+            end
+          end
         end
       end
     end
