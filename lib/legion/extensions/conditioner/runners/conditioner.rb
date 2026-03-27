@@ -36,6 +36,7 @@ module Legion
             { success: true, valid: conditioner.valid? }
           rescue StandardError => e
             log_runner_exception(e)
+            Legion::Logging.error(e.message) unless respond_to?(:log) && log
             task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
           end
 
