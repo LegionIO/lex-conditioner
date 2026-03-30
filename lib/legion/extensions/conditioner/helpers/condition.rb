@@ -6,8 +6,10 @@ module Legion
   module Extensions
     module Conditioner
       class Condition
+        include Legion::JSON::Helper
+
         def initialize(args)
-          @conditions = Legion::JSON.load(args[:conditions])
+          @conditions = json_load(args[:conditions])
           @values = to_dotted_hash(args[:values])
         end
 
