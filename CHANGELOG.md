@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.4] - 2026-03-30
+
+### Added
+- Specs for DomainClassifier (12 examples), ConsentTiers (11 examples), and ConflictResolver (17 examples)
+
+### Fixed
+- DomainClassifier now emits `conditioner.failed` status on invalid classifications
+- ConflictResolver `valid:` field now reflects the actual resolution outcome
+- Collapsed Lint/DuplicateBranch offense in ConflictResolver
+
 ## [0.3.3] - 2026-03-30
 
 ### Changed
