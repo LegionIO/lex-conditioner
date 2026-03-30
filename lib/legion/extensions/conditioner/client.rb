@@ -6,8 +6,10 @@ module Legion
   module Extensions
     module Conditioner
       class Client
+        include Legion::JSON::Helper
+
         def evaluate(conditions:, values:)
-          conditions_json = conditions.is_a?(String) ? conditions : Legion::JSON.dump(conditions)
+          conditions_json = conditions.is_a?(String) ? conditions : json_dump(conditions)
           condition = Condition.new(conditions: conditions_json, values: values)
           {
             valid:       condition.valid?,
