@@ -9,7 +9,7 @@ module Legion
         module DomainClassifier
           def classify(conditions:, domain: nil, **payload)
             conditioner = Legion::Extensions::Conditioner::Condition.new(conditions: conditions,
-                                                                          values:     payload.merge(domain: domain))
+                                                                         values:     payload.merge(domain: domain))
 
             classification = if domain
                                conditioner.valid? ? domain.to_s : 'unclassified'
@@ -17,7 +17,8 @@ module Legion
                                conditioner.valid? ? 'default' : 'unclassified'
                              end
 
-            task_update(payload[:task_id], 'task.queued', **payload) unless payload[:task_id].nil?
+            status = conditioner.valid? ? 'task.queued' : 'conditioner.failed'
+            task_update(payload[:task_id], status, **payload) unless payload[:task_id].nil?
 
             { success: true, valid: conditioner.valid?, domain: classification }
           rescue StandardError => e

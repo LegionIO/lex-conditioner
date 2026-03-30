@@ -11,7 +11,7 @@ module Legion
 
           def evaluate(conditions:, tier: nil, **payload)
             conditioner = Legion::Extensions::Conditioner::Condition.new(conditions: conditions,
-                                                                          values:     payload.merge(tier: tier))
+                                                                         values:     payload.merge(tier: tier))
 
             granted_tier = if conditioner.valid? && TIERS.include?(tier.to_s)
                              tier.to_s

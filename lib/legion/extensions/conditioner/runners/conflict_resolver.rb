@@ -9,7 +9,7 @@ module Legion
         module ConflictResolver
           def resolve(conditions:, competing_conditions: nil, **payload)
             primary = Legion::Extensions::Conditioner::Condition.new(conditions: conditions,
-                                                                      values:     payload)
+                                                                     values:     payload)
 
             resolution = if competing_conditions.nil?
                            primary.valid? ? 'primary' : 'none'
@@ -19,9 +19,7 @@ module Legion
                              values:     payload
                            )
 
-                           if primary.valid? && secondary.valid?
-                             'primary'
-                           elsif primary.valid?
+                           if primary.valid?
                              'primary'
                            elsif secondary.valid?
                              'secondary'
@@ -33,7 +31,7 @@ module Legion
             status = resolution == 'none' ? 'conditioner.failed' : 'task.queued'
             task_update(payload[:task_id], status, **payload) unless payload[:task_id].nil?
 
-            { success: true, valid: primary.valid?, resolution: resolution }
+            { success: true, valid: resolution != 'none', resolution: resolution }
           rescue StandardError => e
             log.log_exception(e, component_type: :runner)
             task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
