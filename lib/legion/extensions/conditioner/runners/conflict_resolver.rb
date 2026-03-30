@@ -13,15 +13,15 @@ module Legion
 
             resolution = if competing_conditions.nil?
                            primary.valid? ? 'primary' : 'none'
+                         elsif primary.valid?
+                           'primary'
                          else
                            secondary = Legion::Extensions::Conditioner::Condition.new(
                              conditions: competing_conditions,
                              values:     payload
                            )
 
-                           if primary.valid?
-                             'primary'
-                           elsif secondary.valid?
+                           if secondary.valid?
                              'secondary'
                            else
                              'none'
