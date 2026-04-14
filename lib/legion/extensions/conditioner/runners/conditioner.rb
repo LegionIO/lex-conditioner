@@ -41,7 +41,7 @@ module Legion
 
           def send_task(**opts)
             subtask_hash = {}
-            %i[runner_routing_key relationship_id chain_id trigger_runner_id trigger_function_id function_id function runner_id runner_class transformation debug task_id results].each do |column| # rubocop:disable Layout/LineLength
+            %i[runner_routing_key relationship_id chain_id trigger_runner_id trigger_function_id function_id function runner_id runner_class transformation engine debug task_id results].each do |column| # rubocop:disable Layout/LineLength
               subtask_hash[column] = opts[column] if opts.key? column
             end
 

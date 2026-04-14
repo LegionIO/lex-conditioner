@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.5] - 2026-04-13
+
+### Added
+- `:engine` to `send_task` whitelist — conditioner now forwards the engine field from the relationship hash to the downstream SubTask message
+
 ## [0.3.4] - 2026-03-30
 
 ### Added
