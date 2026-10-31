@@ -13,12 +13,14 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
   end
   let(:conditions) { { all: [{ fact: 'allowed', operator: 'is_true' }] } }
   let(:published) { [] }
+  let(:published_routes) { [] }
 
   before do
     allow(Legion::Transport::Messages::SubTask).to receive(:new).and_wrap_original do |original, **options|
       original.call(**options).tap do |message|
         allow(message).to receive(:publish!) do
           published << message.message
+          published_routes << message.routing_key
           { accepted: true, status: :confirmed }
         end
       end
@@ -52,10 +54,17 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     expect(published.first).to include(task_id: 8, function: 'run')
   end
 
-  it 'returns transformer queued instead of completed for a transformation stage' do
-    result = runner.check(conditions: conditions, allowed: true, function: 'run', transformation: '{}')
+  it 'preserves canonical transform routing, queued status and metadata despite obsolete root overrides' do
+    result = Legion::Settings.with_overlay(task_execution: {
+                                             statuses: { transformer_queued: 'local.queued' },
+                                             routes:   { transform: 'local.transform' },
+                                             protocol: { metadata_fields: [:function] }
+                                           }) do
+      runner.check(conditions: conditions, allowed: true, function: 'run', transformation: '{}', correlation_id: 'stage-correlation')
+    end
     expect(result).to include(success: true, status: 'transformer.queued')
-    expect(published.first).to include(transformation: '{}')
+    expect(published.first).to include(transformation: '{}', correlation_id: 'stage-correlation')
+    expect(published_routes).to eq(['task.subtask.transform'])
   end
 
   it 'persists a rejection with canonical keyword arguments and its explanation' do

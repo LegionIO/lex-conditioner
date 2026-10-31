@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
-require 'legion/settings/task_execution'
+require 'legion/transport/task_protocol'
 
 module Legion
   module Extensions
@@ -9,7 +9,7 @@ module Legion
       module Runners
         module ConflictResolver
           include Legion::Extensions::Helpers::Lex
-          include Legion::Settings::TaskExecution::Helper
+          include Legion::Transport::TaskProtocol::Helper
 
           def resolve(conditions:, competing_conditions: nil, **payload)
             primary = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload)

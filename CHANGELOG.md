@@ -9,9 +9,9 @@
 - Keep the conditioner actor outside target-task completion; preserve canonical identity, lineage, authorization context, engine/schema options and business arguments through the Transformer handoff.
 
 ### Changed
-- Add extension defaults for operator allowlists, consent tiers, classification labels and transport bindings; use shared task execution statuses/routes and kwargs-only task updates.
+- Add extension defaults for operator allowlists, consent tiers, classification labels and transport bindings; use Transport-owned stable task statuses/routes and kwargs-only task updates. Operator policy stays local; publication policy belongs to Transport.
 - Use real JSON, logging and settings libraries in specs; remove fail-open expectations, logging stubs and implementation-only tests.
-- Require legion-settings 1.5.0 and legion-transport 1.4.32; remove unused cache, crypt and data dependencies. Standalone evaluation does not require LegionIO or a database.
+- Require legion-settings 1.4.3 and legion-transport 1.4.32; remove unused cache, crypt and data dependencies. Standalone evaluation does not require LegionIO or a database.
 - Update operator and stage documentation, guarded companion dependency paths and generated-artifact ignores.
 
 ## [0.3.5] - 2026-04-13

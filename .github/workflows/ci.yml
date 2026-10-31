@@ -10,7 +10,7 @@ jobs:
   ci:
     uses: LegionIO/.github/.github/workflows/ci.yml@e0fc7364b73f446d4cb9bdc162a66ed34bf0daa7
     with:
-      companion-gems: ${{ github.event_name == 'pull_request' && '{"legion-settings":{"repository":"LegionIO/legion-settings","ref":"b5369f610ccd9aad7de1623e61fa06ac2089d9d1"},"legion-transport":{"repository":"LegionIO/legion-transport","ref":"a6eeb3377b1822ed0557a9ef5551f134f5d8b4af"}}' || '{}' }}
+      companion-gems: ${{ github.event_name == 'pull_request' && '{"legion-settings":{"repository":"LegionIO/legion-settings","ref":"ec2274f2001f0b8db296acf78ea99f2a8aebb4d7"},"legion-transport":{"repository":"LegionIO/legion-transport","ref":"0cec78271825be7ed9d8c7888ffcbb7cfd321d12"}}' || '{}' }}
 
   excluded-files:
     uses: LegionIO/.github/.github/workflows/excluded-files.yml@main
@@ -18,7 +18,7 @@ jobs:
   security:
     uses: LegionIO/.github/.github/workflows/security-scan.yml@e0fc7364b73f446d4cb9bdc162a66ed34bf0daa7
     with:
-      companion-gems: ${{ github.event_name == 'pull_request' && '{"legion-settings":{"repository":"LegionIO/legion-settings","ref":"b5369f610ccd9aad7de1623e61fa06ac2089d9d1"},"legion-transport":{"repository":"LegionIO/legion-transport","ref":"a6eeb3377b1822ed0557a9ef5551f134f5d8b4af"}}' || '{}' }}
+      companion-gems: ${{ github.event_name == 'pull_request' && '{"legion-settings":{"repository":"LegionIO/legion-settings","ref":"ec2274f2001f0b8db296acf78ea99f2a8aebb4d7"},"legion-transport":{"repository":"LegionIO/legion-transport","ref":"0cec78271825be7ed9d8c7888ffcbb7cfd321d12"}}' || '{}' }}
 
   version-changelog:
     uses: LegionIO/.github/.github/workflows/version-changelog.yml@main

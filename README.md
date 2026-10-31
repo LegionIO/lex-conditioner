@@ -116,7 +116,7 @@ Evaluates conditions against the payload. Routes to transformation or task queue
 
 Successful results describe forwarding (`task.queued` or `transformer.queued`), **not completion of the eventual target task**. The subscription actor bypasses target Runner completion. Core owns the downstream task's claim, execution and completion. Successful handoffs use confirmed, mandatory `publish!`; rejected/unroutable publication raises `Legion::Transport::PublishRejected` for subscription retry and is not recorded as a completed or failed target execution.
 
-The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. LegionIO 1.9.53 provides the required stage actor and kwargs-only task status integration; use the coordinated legion-settings 1.5.0 and legion-transport 1.4.32 releases.
+The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. LegionIO 1.9.53 provides the required stage actor and kwargs-only task status integration; use the coordinated legion-settings 1.4.3 and legion-transport 1.4.32 releases.
 
 The condition-stage subscription explicitly declares `trusted_internal true` for Core admission. This is an actor-side trust decision, never a claim inferred from payload `source`, roles or principal strings. Restrict publishing to the internal task exchange with broker permissions; preserved user identity remains authorization/audit context and does not grant administrator privileges.
 
@@ -128,7 +128,7 @@ The condition-stage subscription explicitly declares `trusted_internal true` for
 | `ConsentTiers` | `evaluate(conditions:, tier: nil, **payload)` | Grants a configured tier only on acceptance; absent/unknown tier uses the first configured tier |
 | `ConflictResolver` | `resolve(conditions:, competing_conditions: nil, **payload)` | Prefers a matching primary, then secondary, otherwise none; malformed alternatives fail closed |
 
-All runner functions return Hash outcomes. Rejections and exceptions carry `success: false`; auxiliary runners use configured task statuses rather than inventing local lifecycle spellings.
+All runner functions return Hash outcomes. Rejections and exceptions carry `success: false`; auxiliary runners use Transport's canonical task statuses rather than inventing local lifecycle spellings.
 
 ## Configuration
 
@@ -144,7 +144,7 @@ Extension settings live at `extensions.conditioner` and are accessed through `Le
 | `transport.binding_queue` / `transport.legacy_route` | `'conditioner'` / `'task.subtask'` | Existing queue binding and compatibility input route |
 | `transport.success_route` | `'task.conditioner.succeeded'` | Extension success-message route |
 
-Pipeline statuses, canonical metadata fields, conditioner/transform routes and mandatory confirmed publication policy are shared under `task_execution`, supplied by legion-settings. Changing route settings requires matching broker bindings and consumer configuration. No database/cache/crypt service is required for standalone evaluation; AMQP actor dispatch requires a functioning transport.
+Pipeline statuses, canonical metadata fields and conditioner/transform routes are immutable wire identities owned by `Legion::Transport::TaskProtocol`, not process-local settings. Operator policy remains dynamic under `extensions.conditioner`; strict publication policy belongs to `transport.task_publication`. Local overrides cannot rename a downstream stage or reinterpret its status. No database/cache/crypt dependency or service is required for standalone evaluation; AMQP actor dispatch requires a functioning transport.
 
 Example operator restriction:
 

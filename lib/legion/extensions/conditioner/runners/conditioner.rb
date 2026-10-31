@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
-require 'legion/settings/task_execution'
+require 'legion/transport/task_protocol'
 require 'legion/transport'
 require 'legion/transport/messages/subtask'
 
@@ -11,7 +11,7 @@ module Legion
       module Runners
         module Conditioner
           include Legion::Extensions::Helpers::Lex
-          include Legion::Settings::TaskExecution::Helper
+          include Legion::Transport::TaskProtocol::Helper
 
           def check(conditions:, **payload)
             condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload)
@@ -45,7 +45,7 @@ module Legion
               raise Legion::Extensions::Conditioner::ConfigurationError, 'Condition passed but no downstream routing key or transformation is configured'
             end
 
-            fields = task_execution_settings.fetch(:protocol).fetch(:metadata_fields).map(&:to_sym)
+            fields = Legion::Transport::TaskProtocol::METADATA_FIELDS
             envelope = opts.slice(*fields, :transformation, :results, :args, :kwargs, :function_args, :payload, :runner_id)
             envelope[:routing_key] = route
             publication = Legion::Transport::Messages::SubTask.new(**envelope).publish!

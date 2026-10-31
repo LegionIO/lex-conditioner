@@ -2,7 +2,7 @@
 
 require 'legion/extensions/transport'
 require 'legion/extensions/conditioner/settings'
-require 'legion/settings/task_execution'
+require 'legion/transport/task_protocol'
 
 module Legion
   module Extensions
@@ -10,7 +10,7 @@ module Legion
       module Transport
         extend Legion::Extensions::Transport
         extend Legion::Settings::Helper
-        extend Legion::Settings::TaskExecution::Helper
+        extend Legion::Transport::TaskProtocol::Helper
 
         def self.additional_e_to_q
           [
