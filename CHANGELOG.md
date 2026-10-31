@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0] - 2026-10-30
+
+### Fixed
+- Derive condition decisions and explanations from one boolean evaluation tree. Missing truthy facts fail, unknown/disabled operators and malformed rule trees raise a logged configuration error, and nested `all`/`any` groups agree with their explanations.
+- Preserve array and hash facts while resolving dotted paths and array indices; collection operators now inspect the original container.
+- Return explicit skipped/failed runner outcomes, reject missing downstream routes, and require accepted publication with `publish!`. A rejected publication remains retryable rather than becoming success.
+- Keep the conditioner actor outside target-task completion; preserve canonical identity, lineage, authorization context, engine/schema options and business arguments through the Transformer handoff.
+
+### Changed
+- Add extension defaults for operator allowlists, consent tiers, classification labels and transport bindings; use shared task execution statuses/routes and kwargs-only task updates.
+- Use real JSON, logging and settings libraries in specs; remove fail-open expectations, logging stubs and implementation-only tests.
+- Require legion-settings 1.5.0 and legion-transport 1.4.32; remove unused cache, crypt and data dependencies. Standalone evaluation does not require LegionIO or a database.
+- Update operator and stage documentation, guarded companion dependency paths and generated-artifact ignores.
+
 ## [0.3.5] - 2026-04-13
 
 ### Added

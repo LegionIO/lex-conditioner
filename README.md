@@ -49,6 +49,10 @@ result[:explanation][:rules]
 
 Rules use `all`/`any` grouping with `fact`/`operator`/`value` entries. Facts use dot notation for nested keys.
 
+Each group has exactly one key (`all` or `any`) containing an array. Rules require a nonempty string `fact`, a supported `operator`, and a `value` for binary operators only. Unknown keys, malformed groups, unknown/disabled operators, invalid JSON and invalid comparisons raise a logged `Legion::Extensions::Conditioner::ConfigurationError`; they never permit dispatch. Every rule is evaluated, including branches that ordinary short-circuit evaluation would skip.
+
+Decisions and explanations come from the same boolean tree. Empty `all` is true; empty `any` is false. `is_true` and `is_false` use Ruby truthiness: only `nil` and `false` are falsy, and a missing fact is `nil`. Arrays and hashes remain intact for equality, type, emptiness and size checks. `items.0.active` addresses an array child without discarding the `items` array. Facts can use symbol or string hash keys.
+
 ```json
 {
   "all": [
@@ -106,7 +110,49 @@ Evaluates conditions against the payload. Routes to transformation or task queue
 
 - Condition passes + transformation present: routes to `task.subtask.transform`
 - Condition passes + routing key present: routes to `runner_routing_key`
-- Condition fails: `conditioner.failed`, no dispatch
+- Condition fails: `{ success: false, valid: false, status: 'task.skipped', explanation: ... }`, no dispatch
+- Condition passes without a usable target route: explicit failed outcome with `conditioner.failed`, no dispatch
+- Invalid rule/configuration: explicit failed outcome; comparison/runtime errors are never treated as success
+
+Successful results describe forwarding (`task.queued` or `transformer.queued`), **not completion of the eventual target task**. The subscription actor bypasses target Runner completion. Core owns the downstream task's claim, execution and completion. Successful handoffs use confirmed, mandatory `publish!`; rejected/unroutable publication raises `Legion::Transport::PublishRejected` for subscription retry and is not recorded as a completed or failed target execution.
+
+The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. LegionIO 1.9.53 provides the required stage actor and kwargs-only task status integration; use the coordinated legion-settings 1.5.0 and legion-transport 1.4.32 releases.
+
+The condition-stage subscription explicitly declares `trusted_internal true` for Core admission. This is an actor-side trust decision, never a claim inferred from payload `source`, roles or principal strings. Restrict publishing to the internal task exchange with broker permissions; preserved user identity remains authorization/audit context and does not grant administrator privileges.
+
+### Additional runners
+
+| Runner | Function | Behavior |
+|--------|----------|----------|
+| `DomainClassifier` | `classify(conditions:, domain: nil, **payload)` | Returns a requested/default domain on acceptance; configured unclassified label otherwise |
+| `ConsentTiers` | `evaluate(conditions:, tier: nil, **payload)` | Grants a configured tier only on acceptance; absent/unknown tier uses the first configured tier |
+| `ConflictResolver` | `resolve(conditions:, competing_conditions: nil, **payload)` | Prefers a matching primary, then secondary, otherwise none; malformed alternatives fail closed |
+
+All runner functions return Hash outcomes. Rejections and exceptions carry `success: false`; auxiliary runners use configured task statuses rather than inventing local lifecycle spellings.
+
+## Configuration
+
+Extension settings live at `extensions.conditioner` and are accessed through `Legion::Settings::Helper`. User settings override root `default_settings`:
+
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `allowed_operators` | Boolean map with every supported operator enabled | Set an operator to `false` to explicitly disable it; unknown names/nonboolean permissions are rejected |
+| `consent_tiers` | `['tier1', 'tier2', 'tier3']` | Ordered tiers, least privilege first |
+| `default_domain` / `unclassified_domain` | `'default'` / `'unclassified'` | Domain classification labels |
+| `resolutions` | `{primary: 'primary', secondary: 'secondary', none: 'none'}` | Resolution labels, independent of acceptance decisions |
+| `transport.exchange` / `transport.queue` | `'task'` / `'task.conditioner'` | Exchange and queue declarations |
+| `transport.binding_queue` / `transport.legacy_route` | `'conditioner'` / `'task.subtask'` | Existing queue binding and compatibility input route |
+| `transport.success_route` | `'task.conditioner.succeeded'` | Extension success-message route |
+
+Pipeline statuses, canonical metadata fields, conditioner/transform routes and mandatory confirmed publication policy are shared under `task_execution`, supplied by legion-settings. Changing route settings requires matching broker bindings and consumer configuration. No database/cache/crypt service is required for standalone evaluation; AMQP actor dispatch requires a functioning transport.
+
+Example operator restriction:
+
+```ruby
+Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:matches] = false
+```
+
+Permissions are a boolean map, not an additive array: `false` survives default registration and nested settings overlays, while omitted entries retain defaults. Array-form operator policies are not accepted.
 
 ## Transport
 
@@ -118,7 +164,7 @@ Evaluates conditions against the payload. Routes to transformation or task queue
 
 - Ruby >= 3.4
 - [LegionIO](https://github.com/LegionIO/LegionIO) framework (for AMQP actor mode)
-- Standalone Client works without the framework
+- Standalone Client requires only installed gem dependencies, without loading LegionIO or connecting to a database/broker
 
 ## License
 

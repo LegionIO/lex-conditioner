@@ -5,39 +5,6 @@ require 'legion/json'
 require 'legion/extensions/conditioner/helpers/condition'
 
 RSpec.describe Legion::Extensions::Conditioner::Condition do
-  describe '#to_dotted_hash' do
-    let(:condition) do
-      described_class.new(
-        conditions: Legion::JSON.dump({ all: [{ fact: 'status', operator: 'equal', value: 200 }] }),
-        values:     { status: 200 }
-      )
-    end
-
-    it 'flattens a simple hash' do
-      result = condition.to_dotted_hash({ a: 1, b: 2 })
-      expect(result['a']).to eq(1)
-      expect(result['b']).to eq(2)
-    end
-
-    it 'flattens nested hashes with dot notation' do
-      result = condition.to_dotted_hash({ response: { code: 200, body: 'ok' } })
-      expect(result['response.code']).to eq(200)
-      expect(result['response.body']).to eq('ok')
-    end
-
-    it 'flattens arrays with index notation' do
-      result = condition.to_dotted_hash({ items: %w[a b c] })
-      expect(result['items.0']).to eq('a')
-      expect(result['items.1']).to eq('b')
-      expect(result['items.2']).to eq('c')
-    end
-
-    it 'handles deeply nested structures' do
-      result = condition.to_dotted_hash({ a: { b: { c: 'deep' } } })
-      expect(result['a.b.c']).to eq('deep')
-    end
-  end
-
   describe '#valid? with all conditions' do
     it 'returns true when all conditions pass' do
       cond = described_class.new(
@@ -131,14 +98,12 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
       expect(cond.valid?).to eq(true)
     end
 
-    it 'handles is_array operator (arrays get flattened by to_dotted_hash)' do
+    it 'preserves arrays as facts' do
       cond = described_class.new(
         conditions: Legion::JSON.dump({ all: [{ fact: 'items', operator: 'is_array' }] }),
         values:     { items: [1, 2, 3] }
       )
-      # to_dotted_hash flattens arrays into indexed keys (items.0, items.1, etc.)
-      # so the original 'items' key no longer exists as an array
-      expect(cond.valid?).to eq(false)
+      expect(cond.valid?).to eq(true)
     end
 
     it 'handles is_true operator' do
@@ -207,17 +172,6 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
                                       ] }),
         values:     { response: { code: 200 } }
       )
-      expect(cond.valid?).to eq(true)
-    end
-  end
-
-  describe '#valid? caching' do
-    it 'memoizes the result' do
-      cond = described_class.new(
-        conditions: Legion::JSON.dump({ all: [{ fact: 'x', operator: 'equal', value: 1 }] }),
-        values:     { x: 1 }
-      )
-      expect(cond.valid?).to eq(true)
       expect(cond.valid?).to eq(true)
     end
   end
@@ -461,6 +415,95 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
         values:     { label: 'test' }
       )
       expect(cond.valid?).to eq(true)
+    end
+  end
+
+  describe 'fail-closed evaluation' do
+    it 'rejects unknown operators even after an any branch passes' do
+      expect do
+        described_class.new(conditions: { any: [
+                              { fact: 'enabled', operator: 'is_true' },
+                              { fact: 'enabled', operator: 'truish' }
+                            ] }, values: { enabled: true })
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /operator/)
+    end
+
+    it 'rejects groups with mixed all and any rules' do
+      expect do
+        described_class.new(conditions: { all: [], any: [] }, values: {})
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /exactly one/)
+    end
+
+    it 'rejects rules without a binary operand' do
+      expect do
+        described_class.new(conditions: { all: [{ fact: 'enabled', operator: 'equal' }] }, values: { enabled: nil })
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /requires value/)
+    end
+
+    it 'rejects malformed JSON rather than allowing execution' do
+      expect do
+        described_class.new(conditions: '{invalid', values: {})
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError)
+    end
+
+    it 'rejects malformed nested rules even after a failed all branch' do
+      expect do
+        described_class.new(conditions: { all: [{ fact: 'flag', operator: 'is_true' }, nil] }, values: { flag: false })
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /rule must be a Hash/)
+    end
+
+    it 'honors configured operator restrictions' do
+      Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:is_true] = false
+      expect do
+        described_class.new(conditions: { all: [{ fact: 'flag', operator: 'is_true' }] }, values: { flag: true })
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /disabled/)
+    end
+
+    it 'retains explicit operator denials when defaults are merged again' do
+      Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:matches] = false
+      Legion::Settings.merge_settings(:extensions, conditioner: Legion::Extensions::Conditioner.default_settings)
+      expect do
+        described_class.new(conditions: { all: [{ fact: 'text', operator: 'matches', value: '.*' }] }, values: { text: 'abc' })
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /disabled/)
+    end
+
+    it 'rejects nonboolean permission values instead of treating them as grants' do
+      Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:is_true] = 'false'
+      expect do
+        described_class.new(conditions: { all: [{ fact: 'flag', operator: 'is_true' }] }, values: { flag: true })
+      end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /true or false/)
+    end
+
+    it 'reports missing truthy facts as false in all groups' do
+      condition = described_class.new(conditions: { all: [{ fact: 'missing', operator: 'is_true' }] }, values: {})
+      expect(condition.valid?).to be(false)
+      expect(condition.explain).to include(valid: false, rules: [include(actual: nil, result: false)])
+    end
+
+    it 'uses Ruby truthiness consistently in any groups and explanations' do
+      condition = described_class.new(conditions: { any: [{ fact: 'value', operator: 'is_true' }] }, values: { value: 0 })
+      expect(condition.valid?).to be(true)
+      expect(condition.explain).to include(valid: true, rules: [include(actual: 0, result: true)])
+    end
+
+    it 'supports collection facts and indexed children without flattening containers' do
+      condition = described_class.new(conditions: { all: [
+                                        { fact: 'items', operator: 'is_array' },
+                                        { fact: 'items', operator: 'size_equal', value: 2 },
+                                        { fact: 'items.0.active', operator: 'is_true' },
+                                        { fact: 'options', operator: 'equal', value: {} },
+                                        { fact: 'options', operator: 'empty' }
+                                      ] }, values: { items: [{ active: true }, { active: false }], options: {} })
+      expect(condition.valid?).to be(true)
+      expect(condition.explain[:rules].map { |rule| rule[:actual] }).to eq(
+        [[{ active: true }, { active: false }], [{ active: true }, { active: false }], true, {}, {}]
+      )
+    end
+
+    it 'uses empty-group boolean identities consistently' do
+      all = described_class.new(conditions: { all: [] }, values: {})
+      any = described_class.new(conditions: { any: [] }, values: {})
+      expect([all.valid?, all.explain[:valid], any.valid?, any.explain[:valid]]).to eq([true, true, false, false])
     end
   end
 end

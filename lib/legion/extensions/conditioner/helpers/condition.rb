@@ -1,112 +1,127 @@
 # frozen_string_literal: true
 
+require 'legion/json'
+require 'legion/json/helper'
+require 'legion/logging'
+require_relative '../settings'
 require_relative 'comparator'
 
 module Legion
   module Extensions
     module Conditioner
+      class ConfigurationError < ArgumentError; end
+
       class Condition
+        include Legion::Logging::Helper
+        include Legion::Settings::Helper
         include Legion::JSON::Helper
 
-        def initialize(args)
-          @conditions = json_load(args[:conditions])
-          @values = to_dotted_hash(args[:values])
-        end
-
-        def to_dotted_hash(source, target = {}, namespace = nil)
-          prefix = "#{namespace}." if namespace
-          case source
-          when Hash
-            source.each do |key, value|
-              to_dotted_hash(value, target, "#{prefix}#{key}")
-            end
-          when Array
-            source.each_with_index do |value, index|
-              to_dotted_hash(value, target, "#{prefix}#{index}")
-            end
-          else
-            target[namespace] = source
-          end
-          target
-        end
-
-        def validate_vars
-          raise Legion::Exception::MissingArgument, '@conditions is nil' if @conditions.nil?
-          raise Legion::Exception::MissingArgument, '@values is nil' if @values.nil?
-          raise Legion::Exception::WrongType::Hash, @values.class unless @values.is_a? Hash
-          raise Legion::Exception::WrongType::Hash, @conditions.class unless @conditions.is_a? Hash
-        end
-
-        BINARY_OPS = %w[equal not_equal greater_than less_than greater_or_equal less_or_equal between contains starts_with ends_with matches in_set not_in_set
-                        size_equal].freeze
-        UNARY_OPS = %w[nil not_nil is_false is_true is_string is_array is_integer empty not_empty].freeze
-        UNARY_METHOD_MAP = {
-          'is_false' => :false?, 'is_true' => :true?,
+        BINARY_METHODS = %w[equal not_equal greater_than less_than greater_or_equal less_or_equal between contains
+                            starts_with ends_with matches in_set not_in_set size_equal].to_h { |name| [name, :"#{name}?"] }.freeze
+        UNARY_METHODS = {
+          'nil' => :nil?, 'not_nil' => :not_nil?, 'is_false' => :false?, 'is_true' => :true?,
           'is_string' => :string?, 'is_array' => :array?, 'is_integer' => :integer?,
           'empty' => :empty?, 'not_empty' => :not_empty?
         }.freeze
+        private_constant :BINARY_METHODS, :UNARY_METHODS
 
-        def validate_test(conditions = @conditions)
-          conditions.each do |condition|
-            condition[1].each do |rule|
-              result = evaluate_rule(rule)
-              return true if condition[0] == :any && result == true
-              return false if condition[0] == :all && result == false
-            end
-            return false if condition[0] == :any
-            return true if condition[0] == :all
+        def initialize(conditions:, values:)
+          raise ConfigurationError, 'values must be a Hash' unless values.is_a?(Hash)
+
+          @values = values
+          @conditions = conditions.is_a?(String) ? json_load(conditions) : conditions
+          @operators = settings.fetch(:allowed_operators)
+          unless @operators.is_a?(Hash) && @operators.all? do |name, enabled|
+                   (BINARY_METHODS.key?(name.to_s) || UNARY_METHODS.key?(name.to_s)) && [true, false].include?(enabled)
+                 end
+            raise ConfigurationError, 'allowed_operators must map supported operator names to true or false'
           end
-        end
 
-        def evaluate_rule(rule)
-          return validate_test(all: rule[:all]) if rule.include?(:all)
-          return validate_test(any: rule[:any]) if rule.include?(:any)
+          @operators = @operators.transform_keys(&:to_s)
 
-          comp = Legion::Extensions::Conditioner::Comparator
-          op = rule[:operator]
+          @explanation = condition_evaluate_group(conditions: @conditions)
+        rescue StandardError => e
+          handle_exception(e, handled: false)
+          raise if e.is_a?(ConfigurationError)
 
-          if BINARY_OPS.include?(op)
-            comp.send(:"#{op}?", rule[:fact], rule[:value], @values)
-          elsif UNARY_OPS.include?(op)
-            method_name = UNARY_METHOD_MAP[op] || :"#{op}?"
-            comp.send(method_name, rule[:fact], @values)
-          end
+          raise ConfigurationError, "Invalid condition: #{e.message}"
         end
 
         def valid?
-          @valid = validate_test if @valid.nil?
-          @valid
-        end
-
-        def explain_test(conditions = @conditions)
-          group = conditions.keys.first
-          rules = conditions[group].map do |rule|
-            explain_rule(rule)
-          end
-
-          valid = group == :all ? rules.all? { |r| r[:result] } : rules.any? { |r| r[:result] }
-          { valid: valid, group: group, rules: rules }
-        end
-
-        def explain_rule(rule)
-          if rule.include?(:all)
-            result = explain_test(all: rule[:all])
-            return { group: :all, rules: result[:rules], result: result[:valid] }
-          end
-          if rule.include?(:any)
-            result = explain_test(any: rule[:any])
-            return { group: :any, rules: result[:rules], result: result[:valid] }
-          end
-
-          result = evaluate_rule(rule)
-          explanation = { fact: rule[:fact], operator: rule[:operator], result: result }
-          explanation[:value] = rule[:value] if rule.key?(:value)
-          explanation[:actual] = @values[rule[:fact]]
-          explanation
+          @explanation[:valid]
         end
 
         def explain
-          @explain ||= explain_test
+          @explanation
+        end
+
+        private
+
+        def derive_settings_segments
+          [:conditioner]
+        end
+
+        def condition_evaluate_group(conditions:)
+          raise ConfigurationError, 'condition group must be a Hash' unless conditions.is_a?(Hash)
+
+          conditions = conditions.transform_keys(&:to_sym)
+          group = conditions.keys.first
+          unless conditions.size == 1 && %i[all any].include?(group) && conditions[group].is_a?(Array)
+            raise ConfigurationError, 'condition group must contain exactly one all or any Array'
+          end
+
+          rules = conditions[group].map { |rule| condition_evaluate_rule(rule: rule) }
+          valid = group == :all ? rules.all? { |rule| rule[:result] } : rules.any? { |rule| rule[:result] }
+          { valid: valid, group: group, rules: rules }
+        end
+
+        def condition_evaluate_rule(rule:)
+          raise ConfigurationError, 'condition rule must be a Hash' unless rule.is_a?(Hash)
+
+          rule = rule.transform_keys(&:to_sym)
+          if rule.key?(:all) || rule.key?(:any)
+            nested = condition_evaluate_group(conditions: rule)
+            return { group: nested[:group], rules: nested[:rules], result: nested[:valid] }
+          end
+
+          condition_validate_rule(rule: rule)
+          actual = condition_fact_value(fact: rule[:fact])
+          arguments = { fact: rule[:fact], values: { rule[:fact] => actual } }
+          arguments[:value] = rule[:value] if BINARY_METHODS.key?(rule[:operator])
+          method = BINARY_METHODS[rule[:operator]] || UNARY_METHODS.fetch(rule[:operator])
+          result = Legion::Extensions::Conditioner::Comparator.public_send(method, **arguments)
+          explanation = { fact: rule[:fact], operator: rule[:operator], actual: actual, result: result }
+          explanation[:value] = rule[:value] if rule.key?(:value)
+          explanation
+        end
+
+        def condition_validate_rule(rule:)
+          unless (rule.keys - %i[fact operator value]).empty? && rule[:fact].is_a?(String) && !rule[:fact].empty?
+            raise ConfigurationError, 'rule requires a nonempty fact path and only fact, operator, value keys'
+          end
+          raise ConfigurationError, "Unknown or disabled condition operator: #{rule[:operator].inspect}" unless @operators[rule[:operator]] == true
+          raise ConfigurationError, "Operator #{rule[:operator]} requires value" if BINARY_METHODS.key?(rule[:operator]) && !rule.key?(:value)
+          raise ConfigurationError, "Operator #{rule[:operator]} does not accept value" if UNARY_METHODS.key?(rule[:operator]) && rule.key?(:value)
+          return unless rule[:operator] == 'between' && (!rule[:value].is_a?(Array) || rule[:value].size != 2)
+
+          raise ConfigurationError, 'between requires a two-element value Array'
+        end
+
+        def condition_fact_value(fact:)
+          return @values[fact] if @values.key?(fact)
+
+          fact.split('.').reduce(@values) do |value, segment|
+            case value
+            when Hash
+              value.key?(segment) ? value[segment] : value[segment.to_sym]
+            when Array
+              break nil unless segment.match?(/\A\d+\z/)
+
+              value[segment.to_i]
+            else
+              break nil
+            end
+          end
         end
       end
     end

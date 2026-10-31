@@ -5,6 +5,12 @@ module Legion
     module Conditioner
       module Actor
         class Conditioner < Legion::Extensions::Actors::Subscription
+          trusted_internal true
+
+          def use_runner?
+            false
+          end
+
           def runner_function
             'check'
           end
