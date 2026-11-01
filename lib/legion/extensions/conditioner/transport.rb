@@ -9,13 +9,13 @@ module Legion
     module Conditioner
       module Transport
         extend Legion::Extensions::Transport
-        extend Legion::Settings::Helper
         extend Legion::Transport::TaskProtocol::Helper
 
         def self.additional_e_to_q
+          transport = Legion::Settings[:extensions][:conditioner][:transport]
           [
-            { from: settings[:transport][:exchange], to: settings[:transport][:binding_queue], routing_key: settings[:transport][:legacy_route] },
-            { from: settings[:transport][:exchange], to: settings[:transport][:binding_queue], routing_key: task_route(name: :conditioner) }
+            { from: transport[:exchange], to: transport[:binding_queue], routing_key: transport[:legacy_route] },
+            { from: transport[:exchange], to: transport[:binding_queue], routing_key: task_route(name: :conditioner) }
           ]
         end
       end

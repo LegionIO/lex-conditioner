@@ -8,10 +8,8 @@ module Legion
       module Transport
         module Queues
           class Conditioner < Legion::Transport::Queue
-            include Legion::Settings::Helper
-
             def queue_name
-              settings[:transport][:queue]
+              Legion::Settings[:extensions][:conditioner][:transport][:queue]
             end
           end
         end

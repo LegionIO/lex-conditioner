@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'legion/settings'
-require 'legion/settings/helper'
 
 module Legion
   module Extensions

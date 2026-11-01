@@ -9,10 +9,8 @@ module Legion
       module Transport
         module Messages
           class Conditioner < Legion::Transport::Message
-            include Legion::Settings::Helper
-
             def routing_key
-              settings[:transport][:success_route]
+              Legion::Settings[:extensions][:conditioner][:transport][:success_route]
             end
 
             def exchange

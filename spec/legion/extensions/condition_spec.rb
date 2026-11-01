@@ -453,14 +453,14 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
     end
 
     it 'honors configured operator restrictions' do
-      Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:is_true] = false
+      Legion::Settings[:extensions][:conditioner][:allowed_operators][:is_true] = false
       expect do
         described_class.new(conditions: { all: [{ fact: 'flag', operator: 'is_true' }] }, values: { flag: true })
       end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /disabled/)
     end
 
     it 'retains explicit operator denials when defaults are merged again' do
-      Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:matches] = false
+      Legion::Settings[:extensions][:conditioner][:allowed_operators][:matches] = false
       Legion::Settings.merge_settings(:extensions, conditioner: Legion::Extensions::Conditioner.default_settings)
       expect do
         described_class.new(conditions: { all: [{ fact: 'text', operator: 'matches', value: '.*' }] }, values: { text: 'abc' })
@@ -468,7 +468,7 @@ RSpec.describe Legion::Extensions::Conditioner::Condition do
     end
 
     it 'rejects nonboolean permission values instead of treating them as grants' do
-      Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:is_true] = 'false'
+      Legion::Settings[:extensions][:conditioner][:allowed_operators][:is_true] = 'false'
       expect do
         described_class.new(conditions: { all: [{ fact: 'flag', operator: 'is_true' }] }, values: { flag: true })
       end.to raise_error(Legion::Extensions::Conditioner::ConfigurationError, /true or false/)

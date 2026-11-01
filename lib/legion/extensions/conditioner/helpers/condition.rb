@@ -13,7 +13,6 @@ module Legion
 
       class Condition
         include Legion::Logging::Helper
-        include Legion::Settings::Helper
         include Legion::JSON::Helper
 
         BINARY_METHODS = %w[equal not_equal greater_than less_than greater_or_equal less_or_equal between contains
@@ -30,7 +29,7 @@ module Legion
 
           @values = values
           @conditions = conditions.is_a?(String) ? json_load(conditions) : conditions
-          @operators = settings.fetch(:allowed_operators)
+          @operators = Legion::Settings[:extensions][:conditioner][:allowed_operators]
           unless @operators.is_a?(Hash) && @operators.all? do |name, enabled|
                    (BINARY_METHODS.key?(name.to_s) || UNARY_METHODS.key?(name.to_s)) && [true, false].include?(enabled)
                  end
@@ -56,10 +55,6 @@ module Legion
         end
 
         private
-
-        def derive_settings_segments
-          [:conditioner]
-        end
 
         def condition_evaluate_group(conditions:)
           raise ConfigurationError, 'condition group must be a Hash' unless conditions.is_a?(Hash)

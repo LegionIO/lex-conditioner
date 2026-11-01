@@ -18,7 +18,7 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::DomainClassifier do
   end
 
   it 'uses configured default and rejection domain labels' do
-    settings = Legion::Settings.loader.settings[:extensions][:conditioner]
+    settings = Legion::Settings[:extensions][:conditioner]
     settings[:default_domain] = 'general'
     settings[:unclassified_domain] = 'rejected'
     expect(runner.classify(conditions: conditions, allowed: true)).to include(domain: 'general')

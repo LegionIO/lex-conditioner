@@ -6,12 +6,13 @@
 - Derive condition decisions and explanations from one boolean evaluation tree. Missing truthy facts fail, unknown/disabled operators and malformed rule trees raise a logged configuration error, and nested `all`/`any` groups agree with their explanations.
 - Preserve array and hash facts while resolving dotted paths and array indices; collection operators now inspect the original container.
 - Return explicit skipped/failed runner outcomes, reject missing downstream routes, and require accepted publication with `publish!`. A rejected publication remains retryable rather than becoming success.
-- Keep the conditioner actor outside target-task completion; preserve canonical identity, lineage, authorization context, engine/schema options and business arguments through the Transformer handoff.
+- Restore normal ingress and Runner execution for the Conditioner actor. Pass destination identity as stage arguments so forwarding cannot claim or complete the target; preserve lineage, authorization context, engine/schema options and business arguments through the Transformer handoff.
 
 ### Changed
 - Add extension defaults for operator allowlists, consent tiers, classification labels and transport bindings; use Transport-owned stable task statuses/routes and kwargs-only task updates. Operator policy stays local; publication policy belongs to Transport.
+- Read standalone operator and transport policy from the live canonical settings tree; rely on automatic framework settings injection for runners and actors without custom namespace overrides.
 - Use real JSON, logging and settings libraries in specs; remove fail-open expectations, logging stubs and implementation-only tests.
-- Require legion-settings 1.4.3 and legion-transport 1.4.32; remove unused cache, crypt and data dependencies. Standalone evaluation does not require LegionIO or a database.
+- Require legion-settings 1.4.5 and legion-transport 1.4.32; remove unused cache, crypt and data dependencies. Standalone evaluation does not require LegionIO or a database.
 - Update operator and stage documentation, guarded companion dependency paths and generated-artifact ignores.
 
 ## [0.3.5] - 2026-04-13

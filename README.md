@@ -114,9 +114,9 @@ Evaluates conditions against the payload. Routes to transformation or task queue
 - Condition passes without a usable target route: explicit failed outcome with `conditioner.failed`, no dispatch
 - Invalid rule/configuration: explicit failed outcome; comparison/runtime errors are never treated as success
 
-Successful results describe forwarding (`task.queued` or `transformer.queued`), **not completion of the eventual target task**. The subscription actor bypasses target Runner completion. Core owns the downstream task's claim, execution and completion. Successful handoffs use confirmed, mandatory `publish!`; rejected/unroutable publication raises `Legion::Transport::PublishRejected` for subscription retry and is not recorded as a completed or failed target execution.
+Successful results describe forwarding (`task.queued` or `transformer.queued`), **not completion of the eventual target task**. The subscription actor uses normal ingress and `Legion::Runner.run`, carrying the destination envelope as business arguments rather than the stage's execution identity. Core claims and completes the destination only when its own runner executes. Successful handoffs use confirmed, mandatory `publish!`; rejected/unroutable publication raises `Legion::Transport::PublishRejected` for subscription retry and is not recorded as a completed or failed target execution.
 
-The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. LegionIO 1.9.53 provides the required stage actor and kwargs-only task status integration; use the coordinated legion-settings 1.4.3 and legion-transport 1.4.32 releases.
+The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. LegionIO 1.9.53 provides the required stage actor and kwargs-only task status integration; use the coordinated legion-settings 1.4.5 and legion-transport 1.4.32 releases.
 
 The condition-stage subscription explicitly declares `trusted_internal true` for Core admission. This is an actor-side trust decision, never a claim inferred from payload `source`, roles or principal strings. Restrict publishing to the internal task exchange with broker permissions; preserved user identity remains authorization/audit context and does not grant administrator privileges.
 
@@ -132,7 +132,7 @@ All runner functions return Hash outcomes. Rejections and exceptions carry `succ
 
 ## Configuration
 
-Extension settings live at `extensions.conditioner` and are accessed through `Legion::Settings::Helper`. User settings override root `default_settings`:
+Extension settings live at `extensions.conditioner`. Framework runners and actors use their automatically injected `settings` helper; standalone evaluation and transport objects read `Legion::Settings[:extensions][:conditioner]` directly. Defaults are registered at startup, while every new evaluation reads the live user policy without a cached settings tree:
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
@@ -149,7 +149,7 @@ Pipeline statuses, canonical metadata fields and conditioner/transform routes ar
 Example operator restriction:
 
 ```ruby
-Legion::Settings.loader.settings[:extensions][:conditioner][:allowed_operators][:matches] = false
+Legion::Settings[:extensions][:conditioner][:allowed_operators][:matches] = false
 ```
 
 Permissions are a boolean map, not an additive array: `false` survives default registration and nested settings overlays, while omitted entries retain defaults. Array-form operator policies are not accepted.

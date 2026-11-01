@@ -14,18 +14,18 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::ConsentTiers do
   let(:conditions) { { all: [{ fact: 'role', operator: 'equal', value: 'admin' }] } }
 
   it 'grants a requested configured tier only for passing facts' do
-    Legion::Settings.loader.settings[:extensions][:conditioner][:consent_tiers] = %w[read write]
+    Legion::Settings[:extensions][:conditioner][:consent_tiers] = %w[read write]
     expect(runner.evaluate(conditions: conditions, role: 'admin', tier: 'write')).to include(success: true, valid: true, tier: 'write')
     expect(runner.evaluate(conditions: conditions, role: 'guest', tier: 'write')).to include(success: false, valid: false, tier: nil)
   end
 
   it 'uses the lowest configured tier when a requested tier is unavailable' do
-    Legion::Settings.loader.settings[:extensions][:conditioner][:consent_tiers] = %w[read write]
+    Legion::Settings[:extensions][:conditioner][:consent_tiers] = %w[read write]
     expect(runner.evaluate(conditions: conditions, role: 'admin', tier: 'root')).to include(tier: 'read')
   end
 
   it 'fails closed for an invalid tier policy' do
-    Legion::Settings.loader.settings[:extensions][:conditioner][:consent_tiers] = []
+    Legion::Settings[:extensions][:conditioner][:consent_tiers] = []
     expect(runner.evaluate(conditions: conditions, role: 'admin', task_id: 9)).to include(success: false, status: 'conditioner.exception')
   end
 end

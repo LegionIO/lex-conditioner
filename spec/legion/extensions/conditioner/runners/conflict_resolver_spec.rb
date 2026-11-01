@@ -27,7 +27,7 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::ConflictResolver do
   end
 
   it 'applies configured outcome labels without using labels as decisions' do
-    Legion::Settings.loader.settings[:extensions][:conditioner][:resolutions] = { primary: 'preferred', secondary: 'alternate', none: 'rejected' }
+    Legion::Settings[:extensions][:conditioner][:resolutions] = { primary: 'preferred', secondary: 'alternate', none: 'rejected' }
     expect(runner.resolve(conditions: primary, score: 80)).to include(valid: true, resolution: 'preferred')
     expect(runner.resolve(conditions: primary, score: 10)).to include(valid: false, resolution: 'rejected')
   end

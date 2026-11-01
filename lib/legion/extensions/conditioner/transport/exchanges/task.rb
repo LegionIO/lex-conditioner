@@ -9,10 +9,8 @@ module Legion
       module Transport
         module Exchanges
           class Task < Legion::Transport::Exchanges::Task
-            include Legion::Settings::Helper
-
             def exchange_name
-              settings[:transport][:exchange]
+              Legion::Settings[:extensions][:conditioner][:transport][:exchange]
             end
           end
         end
