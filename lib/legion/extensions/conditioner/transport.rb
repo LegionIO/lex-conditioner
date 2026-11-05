@@ -2,14 +2,14 @@
 
 require 'legion/extensions/transport'
 require 'legion/extensions/conditioner/settings'
-require 'legion/transport/task_protocol'
+require 'legion/transport/task/protocol'
 
 module Legion
   module Extensions
     module Conditioner
       module Transport
         extend Legion::Extensions::Transport
-        extend Legion::Transport::TaskProtocol::Helper
+        extend Legion::Transport::Task::Protocol::Helper
 
         def self.additional_e_to_q
           transport = Legion::Settings[:extensions][:conditioner][:transport]

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
-require 'legion/transport/task_protocol'
+require 'legion/transport/task/protocol'
 
 module Legion
   module Extensions
@@ -9,7 +9,7 @@ module Legion
       module Runners
         module DomainClassifier
           include Legion::Extensions::Helpers::Lex
-          include Legion::Transport::TaskProtocol::Helper
+          include Legion::Transport::Task::Protocol::Helper
 
           def classify(conditions:, domain: nil, **payload)
             condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload.merge(domain: domain))

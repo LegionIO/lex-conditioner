@@ -20,10 +20,12 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
       task_id: 12, parent_id: 11, master_id: 10, chain_id: 4, relationship_id: 5,
       function: 'run', runner_class: 'Example', runner_routing_key: 'example.run',
       principal_id: 'alice', principal_type: 'user', worker_id: 'worker-1', tenant_id: 'tenant-1',
+      originating_principal_id: 'originator', originating_principal_type: 'user',
       correlation_id: 'correlation-1', message_id: 'message-1', source: 'scheduler', depth: 2,
       schedule_id: 8, occurrence_id: 'occurrence-1', definition_version: 3,
       engine: 'erb', engine_options: { trim_mode: '-' }, schema: { type: 'object' },
-      transformation: '{}', results: { items: [1, 2] }, args: { customer: 'abc' }
+      transformation: '{}', results: { items: [1, 2] }, args: { customer: 'abc' },
+      kwargs: { region: 'west' }, function_args: { limit: 2 }, payload: { request: 'request-1' }
     }
 
     result = runner.send_task(**envelope)

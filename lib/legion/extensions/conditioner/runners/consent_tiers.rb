@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
-require 'legion/transport/task_protocol'
+require 'legion/transport/task/protocol'
 
 module Legion
   module Extensions
@@ -9,7 +9,7 @@ module Legion
       module Runners
         module ConsentTiers
           include Legion::Extensions::Helpers::Lex
-          include Legion::Transport::TaskProtocol::Helper
+          include Legion::Transport::Task::Protocol::Helper
 
           def evaluate(conditions:, tier: nil, **payload)
             condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload.merge(tier: tier))
