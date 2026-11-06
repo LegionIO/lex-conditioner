@@ -1,44 +1,36 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
+require 'legion/transport/task/protocol'
 
 module Legion
   module Extensions
     module Conditioner
       module Runners
         module ConflictResolver
-          def resolve(conditions:, competing_conditions: nil, **payload)
-            primary = Legion::Extensions::Conditioner::Condition.new(conditions: conditions,
-                                                                     values:     payload)
-
-            resolution = if competing_conditions.nil?
-                           primary.valid? ? 'primary' : 'none'
-                         elsif primary.valid?
-                           'primary'
-                         else
-                           secondary = Legion::Extensions::Conditioner::Condition.new(
-                             conditions: competing_conditions,
-                             values:     payload
-                           )
-
-                           if secondary.valid?
-                             'secondary'
-                           else
-                             'none'
-                           end
-                         end
-
-            status = resolution == 'none' ? 'conditioner.failed' : 'task.queued'
-            task_update(payload[:task_id], status, **payload) unless payload[:task_id].nil?
-
-            { success: true, valid: resolution != 'none', resolution: resolution }
-          rescue StandardError => e
-            log.log_exception(e, component_type: :runner)
-            task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
-          end
-
           include Legion::Extensions::Helpers::Lex
-          include Legion::Extensions::Helpers::Task
+          include Legion::Transport::Task::Protocol::Helper
+
+          def resolve(conditions:, competing_conditions: nil, **payload)
+            primary = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload)
+            unless primary.valid? || competing_conditions.nil?
+              secondary = Legion::Extensions::Conditioner::Condition.new(conditions: competing_conditions, values: payload)
+            end
+            selection = if primary.valid?
+                          :primary
+                        elsif secondary&.valid?
+                          :secondary
+                        else
+                          :none
+                        end
+            valid = selection != :none
+            status = task_status(name: valid ? :queued : :conditioner_failed)
+            { success: valid, valid: valid, resolution: settings.fetch(:resolutions).fetch(selection), status: status }
+          rescue StandardError => e
+            handle_exception(e, task_id: payload[:task_id])
+            status = task_status(name: :conditioner_exception)
+            { success: false, valid: false, status: status, error: e.message }
+          end
         end
       end
     end

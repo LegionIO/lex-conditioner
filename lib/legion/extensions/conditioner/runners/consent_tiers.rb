@@ -1,36 +1,31 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
+require 'legion/transport/task/protocol'
 
 module Legion
   module Extensions
     module Conditioner
       module Runners
         module ConsentTiers
-          TIERS = %w[tier1 tier2 tier3].freeze
+          include Legion::Extensions::Helpers::Lex
+          include Legion::Transport::Task::Protocol::Helper
 
           def evaluate(conditions:, tier: nil, **payload)
-            conditioner = Legion::Extensions::Conditioner::Condition.new(conditions: conditions,
-                                                                         values:     payload.merge(tier: tier))
+            condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload.merge(tier: tier))
+            tiers = settings.fetch(:consent_tiers)
+            unless tiers.is_a?(Array) && !tiers.empty? && tiers.all? { |value| value.is_a?(String) && !value.empty? }
+              raise Legion::Extensions::Conditioner::ConfigurationError, 'consent_tiers must be a nonempty Array of tier names'
+            end
 
-            granted_tier = if conditioner.valid? && TIERS.include?(tier.to_s)
-                             tier.to_s
-                           elsif conditioner.valid?
-                             TIERS.first
-                           end
-
-            status = conditioner.valid? ? 'task.queued' : 'conditioner.failed'
-
-            task_update(payload[:task_id], status, **payload) unless payload[:task_id].nil?
-
-            { success: true, valid: conditioner.valid?, tier: granted_tier }
+            granted_tier = (tiers.include?(tier.to_s) ? tier.to_s : tiers.first) if condition.valid?
+            status = task_status(name: condition.valid? ? :queued : :conditioner_failed)
+            { success: condition.valid?, valid: condition.valid?, tier: granted_tier, status: status }
           rescue StandardError => e
-            log.log_exception(e, component_type: :runner)
-            task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
+            handle_exception(e, task_id: payload[:task_id])
+            status = task_status(name: :conditioner_exception)
+            { success: false, valid: false, status: status, error: e.message }
           end
-
-          include Legion::Extensions::Helpers::Lex
-          include Legion::Extensions::Helpers::Task
         end
       end
     end

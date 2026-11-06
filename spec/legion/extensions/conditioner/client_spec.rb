@@ -29,14 +29,14 @@ RSpec.describe Legion::Extensions::Conditioner::Client do
     end
 
     context 'explanation hash' do
-      it 'includes explanation with rules array' do
+      it 'returns the documented decision and explanation contract' do
         result = client.evaluate(
           conditions: { all: [{ fact: 'name', operator: 'equal', value: 'legion' }] },
           values:     { name: 'legion' }
         )
-        expect(result[:explanation]).to be_a(Hash)
-        expect(result[:explanation][:rules]).to be_an(Array)
-        expect(result[:explanation][:rules]).not_to be_empty
+        expect(result).to eq(valid: true, explanation: { valid: true, group: :all, rules: [
+                               { fact: 'name', operator: 'equal', value: 'legion', actual: 'legion', result: true }
+                             ] })
       end
     end
 

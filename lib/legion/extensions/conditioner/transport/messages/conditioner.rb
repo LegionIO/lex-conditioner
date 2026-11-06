@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'legion/extensions/conditioner/transport/exchanges/task'
+
 module Legion
   module Extensions
     module Conditioner
@@ -11,7 +13,7 @@ module Legion
             end
 
             def exchange
-              Legion::Transport::Exchanges::Task
+              Legion::Extensions::Conditioner::Transport::Exchanges::Task
             end
           end
         end

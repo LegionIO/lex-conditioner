@@ -1,33 +1,30 @@
 # frozen_string_literal: true
 
 require 'legion/extensions/conditioner/helpers/condition'
+require 'legion/transport/task/protocol'
 
 module Legion
   module Extensions
     module Conditioner
       module Runners
         module DomainClassifier
-          def classify(conditions:, domain: nil, **payload)
-            conditioner = Legion::Extensions::Conditioner::Condition.new(conditions: conditions,
-                                                                         values:     payload.merge(domain: domain))
-
-            classification = if domain
-                               conditioner.valid? ? domain.to_s : 'unclassified'
-                             else
-                               conditioner.valid? ? 'default' : 'unclassified'
-                             end
-
-            status = conditioner.valid? ? 'task.queued' : 'conditioner.failed'
-            task_update(payload[:task_id], status, **payload) unless payload[:task_id].nil?
-
-            { success: true, valid: conditioner.valid?, domain: classification }
-          rescue StandardError => e
-            log.log_exception(e, component_type: :runner)
-            task_update(payload[:task_id], 'conditioner.exception', **payload) unless payload[:task_id].nil?
-          end
-
           include Legion::Extensions::Helpers::Lex
-          include Legion::Extensions::Helpers::Task
+          include Legion::Transport::Task::Protocol::Helper
+
+          def classify(conditions:, domain: nil, **payload)
+            condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload.merge(domain: domain))
+            classification = if condition.valid?
+                               domain ? domain.to_s : settings.fetch(:default_domain)
+                             else
+                               settings.fetch(:unclassified_domain)
+                             end
+            status = task_status(name: condition.valid? ? :queued : :conditioner_failed)
+            { success: condition.valid?, valid: condition.valid?, domain: classification, status: status }
+          rescue StandardError => e
+            handle_exception(e, task_id: payload[:task_id])
+            status = task_status(name: :conditioner_exception)
+            { success: false, valid: false, status: status, error: e.message }
+          end
         end
       end
     end
