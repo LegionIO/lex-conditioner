@@ -7,8 +7,6 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::ConsentTiers do
   let(:runner) do
     stub_const('Legion::Extensions::Conditioner::Runners::ConsentTiersHarness', Class.new do
       include Legion::Extensions::Conditioner::Runners::ConsentTiers
-
-      def task_update(**); end
     end).new
   end
   let(:conditions) { { all: [{ fact: 'role', operator: 'equal', value: 'admin' }] } }

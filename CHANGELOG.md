@@ -7,6 +7,8 @@
 - Preserve array and hash facts while resolving dotted paths and array indices; collection operators now inspect the original container.
 - Return explicit skipped/failed runner outcomes, reject missing downstream routes, and require accepted publication with `publish!`. A rejected publication remains retryable rather than becoming success.
 - Restore normal ingress and Runner execution for the Conditioner actor. Pass destination identity as stage arguments so forwarding cannot complete the target; preserve lineage, authorization context, engine/schema options and business arguments through the Transformer handoff.
+- Propagate Conditioner persistence errors without a second status write; auxiliary runners return outcomes and leave invocation persistence to Core.
+- Evaluate competing conditions only after the primary rejects, preserving primary precedence when an unused alternative is malformed.
 
 ### Changed
 - Add extension defaults for operator allowlists, consent tiers, classification labels and transport bindings; use Transport-owned stable task statuses/routes and kwargs-only task updates. Operator policy stays local; publication policy belongs to Transport.

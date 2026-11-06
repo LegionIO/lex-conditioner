@@ -7,8 +7,6 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::ConflictResolver do
   let(:runner) do
     stub_const('Legion::Extensions::Conditioner::Runners::ConflictResolverHarness', Class.new do
       include Legion::Extensions::Conditioner::Runners::ConflictResolver
-
-      def task_update(**); end
     end).new
   end
   let(:primary) { { all: [{ fact: 'score', operator: 'greater_than', value: 50 }] } }
@@ -32,7 +30,13 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::ConflictResolver do
     expect(runner.resolve(conditions: primary, score: 10)).to include(valid: false, resolution: 'rejected')
   end
 
-  it 'rejects malformed competing rules even if primary matches' do
-    expect(runner.resolve(conditions: primary, competing_conditions: {}, score: 80, task_id: 8)).to include(success: false, status: 'conditioner.exception')
+  it 'ignores an unused malformed secondary when the primary matches' do
+    expect(runner.resolve(conditions: primary, competing_conditions: {}, score: 80, task_id: 8))
+      .to include(success: true, valid: true, resolution: 'primary')
+  end
+
+  it 'rejects a malformed secondary when the primary does not match' do
+    expect(runner.resolve(conditions: primary, competing_conditions: {}, score: 10, task_id: 8))
+      .to include(success: false, status: 'conditioner.exception')
   end
 end

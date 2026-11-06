@@ -126,9 +126,9 @@ The condition-stage subscription explicitly declares `trusted_internal true` for
 |--------|----------|----------|
 | `DomainClassifier` | `classify(conditions:, domain: nil, **payload)` | Returns a requested/default domain on acceptance; configured unclassified label otherwise |
 | `ConsentTiers` | `evaluate(conditions:, tier: nil, **payload)` | Grants a configured tier only on acceptance; absent/unknown tier uses the first configured tier |
-| `ConflictResolver` | `resolve(conditions:, competing_conditions: nil, **payload)` | Prefers a matching primary, then secondary, otherwise none; malformed alternatives fail closed |
+| `ConflictResolver` | `resolve(conditions:, competing_conditions: nil, **payload)` | Prefers a matching primary; evaluates the secondary only after primary rejection; malformed evaluated rules fail closed |
 
-All runner functions return Hash outcomes. Rejections and exceptions carry `success: false`; auxiliary runners use Transport's canonical task statuses rather than inventing local lifecycle spellings.
+All runner functions return Hash outcomes. Rejections and exceptions carry `success: false`; auxiliary runners use Transport's canonical task statuses rather than inventing local lifecycle spellings. Core owns persistence for these auxiliary invocations; they do not separately update the invocation task. The Conditioner stage writes a rejected destination's status once, and persistence failures propagate.
 
 ## Configuration
 
@@ -144,7 +144,7 @@ Extension settings live at `extensions.conditioner`. Framework runners and actor
 | `transport.binding_queue` / `transport.legacy_route` | `'conditioner'` / `'task.subtask'` | Existing queue binding and compatibility input route |
 | `transport.success_route` | `'task.conditioner.succeeded'` | Extension success-message route |
 
-Pipeline statuses, canonical metadata fields and conditioner/transform routes are immutable wire identities owned by `Legion::Transport::Task::Protocol` (`require 'legion/transport/task/protocol'`), not process-local settings. Operator policy remains dynamic under `extensions.conditioner`; strict publication policy belongs to `transport.task_publication`. Local overrides cannot rename a downstream stage or reinterpret its status. No database/cache/crypt dependency or service is required for standalone evaluation; AMQP actor dispatch requires a functioning transport. Conditioner has no execution-schema dependency: forwarding and rejection updates use Transport messages rather than attempts, leases or an outbox.
+Pipeline statuses, canonical metadata fields and conditioner/transform routes are immutable wire identities owned by `Legion::Transport::Task::Protocol` (`require 'legion/transport/task/protocol'`), not process-local settings. Operator policy remains dynamic under `extensions.conditioner`; strict publication policy belongs to `transport.task_publication`. Local overrides cannot rename a downstream stage or reinterpret its status. No database/cache/crypt dependency or service is required for standalone evaluation; AMQP actor dispatch requires a functioning transport. Conditioner has no execution-schema dependency: forwarding uses Transport messages, and rejection updates use the framework task helper (the Task model when Data is connected, otherwise a TaskUpdate message), not attempts, leases or an outbox.
 
 Example operator restriction:
 

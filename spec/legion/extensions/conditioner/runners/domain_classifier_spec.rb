@@ -7,8 +7,6 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::DomainClassifier do
   let(:runner) do
     stub_const('Legion::Extensions::Conditioner::Runners::DomainClassifierHarness', Class.new do
       include Legion::Extensions::Conditioner::Runners::DomainClassifier
-
-      def task_update(**); end
     end).new
   end
   let(:conditions) { { all: [{ fact: 'allowed', operator: 'is_true' }] } }

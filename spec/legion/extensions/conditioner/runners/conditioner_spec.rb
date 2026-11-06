@@ -61,9 +61,12 @@ RSpec.describe Legion::Extensions::Conditioner::Runners::Conditioner do
     expect(published_routes).to eq([Legion::Transport::Task::Protocol::ROUTES.fetch(:transform)])
   end
 
-  it 'persists a rejection with canonical keyword arguments and its explanation' do
-    expect(runner).to receive(:task_update).with(task_id: 9, status: 'task.skipped', results: include(success: false, explanation: include(valid: false)))
-    runner.check(conditions: conditions, task_id: 9, allowed: false)
+  it 'propagates a persistence failure without attempting another status write' do
+    failure = IOError.new('persistence unavailable')
+    expect(runner).to receive(:task_update).once.and_raise(failure)
+
+    expect { runner.check(conditions: conditions, task_id: 9, allowed: false) }
+      .to raise_error(IOError) { |error| expect(error).to equal(failure) }
   end
 
   it 'does not turn a rejected publication into a successful stage or terminal task failure' do

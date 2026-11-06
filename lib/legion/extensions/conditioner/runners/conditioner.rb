@@ -14,26 +14,27 @@ module Legion
           include Legion::Transport::Task::Protocol::Helper
 
           def check(conditions:, **payload)
-            condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload)
-            if condition.valid?
-              dispatch = send_task(**payload)
-              log.debug "Condition forwarded task_id=#{payload[:task_id]} status=#{dispatch[:status]}"
-              dispatch.merge(valid: true, explanation: condition.explain)
-            else
+            begin
+              condition = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload)
+              if condition.valid?
+                dispatch = send_task(**payload)
+                log.debug "Condition forwarded task_id=#{payload[:task_id]} status=#{dispatch[:status]}"
+                return { **dispatch, valid: true, explanation: condition.explain }
+              end
+
               outcome = { success: false, valid: false, status: task_status(name: :skipped),
                           task_id: payload[:task_id], explanation: condition.explain }
-              task_update(task_id: payload[:task_id], status: outcome[:status], results: outcome) if payload[:task_id]
               log.debug "Condition rejected task_id=#{payload[:task_id]}"
-              outcome
+            rescue Legion::Transport::PublishRejected => e
+              handle_exception(e, task_id: payload[:task_id], handled: false)
+              raise
+            rescue StandardError => e
+              handle_exception(e, task_id: payload[:task_id])
+              status = task_status(name: e.is_a?(Legion::Extensions::Conditioner::ConfigurationError) ? :conditioner_failed : :conditioner_exception)
+              outcome = { success: false, valid: false, status: status, task_id: payload[:task_id], error: e.message }
             end
-          rescue Legion::Transport::PublishRejected => e
-            handle_exception(e, task_id: payload[:task_id], handled: false)
-            raise
-          rescue StandardError => e
-            handle_exception(e, task_id: payload[:task_id])
-            status = task_status(name: e.is_a?(Legion::Extensions::Conditioner::ConfigurationError) ? :conditioner_failed : :conditioner_exception)
-            outcome = { success: false, valid: false, status: status, task_id: payload[:task_id], error: e.message }
-            task_update(task_id: payload[:task_id], status: status, results: outcome) if payload[:task_id]
+
+            task_update(task_id: payload[:task_id], status: outcome[:status], results: outcome) if payload[:task_id]
             outcome
           end
 

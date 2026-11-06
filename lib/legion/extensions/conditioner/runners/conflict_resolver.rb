@@ -13,7 +13,9 @@ module Legion
 
           def resolve(conditions:, competing_conditions: nil, **payload)
             primary = Legion::Extensions::Conditioner::Condition.new(conditions: conditions, values: payload)
-            secondary = Legion::Extensions::Conditioner::Condition.new(conditions: competing_conditions, values: payload) unless competing_conditions.nil?
+            unless primary.valid? || competing_conditions.nil?
+              secondary = Legion::Extensions::Conditioner::Condition.new(conditions: competing_conditions, values: payload)
+            end
             selection = if primary.valid?
                           :primary
                         elsif secondary&.valid?
@@ -23,15 +25,11 @@ module Legion
                         end
             valid = selection != :none
             status = task_status(name: valid ? :queued : :conditioner_failed)
-            outcome = { success: valid, valid: valid, resolution: settings.fetch(:resolutions).fetch(selection), status: status }
-            task_update(task_id: payload[:task_id], status: status, results: outcome) if payload[:task_id]
-            outcome
+            { success: valid, valid: valid, resolution: settings.fetch(:resolutions).fetch(selection), status: status }
           rescue StandardError => e
             handle_exception(e, task_id: payload[:task_id])
             status = task_status(name: :conditioner_exception)
-            outcome = { success: false, valid: false, status: status, error: e.message }
-            task_update(task_id: payload[:task_id], status: status, results: outcome) if payload[:task_id]
-            outcome
+            { success: false, valid: false, status: status, error: e.message }
           end
         end
       end
