@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'legion/extensions/conditioner/settings'
-
 module Legion
   module Extensions
     module Conditioner
@@ -9,7 +7,7 @@ module Legion
         module Queues
           class Conditioner < Legion::Transport::Queue
             def queue_name
-              Legion::Settings[:extensions][:conditioner][:transport][:queue]
+              'task.conditioner'
             end
           end
         end

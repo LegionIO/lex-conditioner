@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'legion/extensions/conditioner/settings'
 require 'legion/extensions/conditioner/transport/exchanges/task'
 
 module Legion
@@ -10,7 +9,7 @@ module Legion
         module Messages
           class Conditioner < Legion::Transport::Message
             def routing_key
-              Legion::Settings[:extensions][:conditioner][:transport][:success_route]
+              'task.conditioner.succeeded'
             end
 
             def exchange

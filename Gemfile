@@ -5,7 +5,7 @@ source 'https://rubygems.org'
 gemspec
 
 dependency_root = File.directory?(File.join(__dir__, '.ci-dependencies')) ? File.join(__dir__, '.ci-dependencies') : File.expand_path('../..', __dir__)
-%w[legion-data legion-settings legion-transport].each do |name|
+%w[legion-settings legion-transport].each do |name|
   path = File.join(dependency_root, name)
   gem name, path: path if File.file?(File.join(path, "#{name}.gemspec"))
 end

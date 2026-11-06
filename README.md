@@ -116,7 +116,7 @@ Evaluates conditions against the payload. Routes to transformation or task queue
 
 Successful results describe forwarding (`task.queued` or `transformer.queued`), **not completion of the eventual target task**. The subscription actor uses normal ingress and `Legion::Runner.run`, carrying the destination envelope as business arguments rather than the stage's execution identity. Core completes the destination only when its own runner executes. Successful handoffs use confirmed, mandatory `publish!`; rejected/unroutable publication raises `Legion::Transport::PublishRejected` for subscription retry and is not recorded as a completed or failed target execution.
 
-The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. LegionIO 1.9.53 provides the required stage actor and kwargs-only task status integration; use the coordinated legion-settings 1.4.5 and legion-transport 1.4.32 releases.
+The forwarding envelope retains canonical task/parent/master/chain identity, relationship/function identity, principal/worker/tenant context, schedule/occurrence identity, deadline/depth, correlation/message identity, engine/schema/options and business `args`/`kwargs`/`function_args`/`payload`/`results`. Consumed `conditions` are not forwarded back into the conditioner. Actor mode requires the coordinated LegionIO stage-admission and keyword-only task-status integration, alongside legion-settings >= 1.4.5 and released legion-transport >= 1.4.32.
 
 The condition-stage subscription explicitly declares `trusted_internal true` for Core admission. This is an actor-side trust decision, never a claim inferred from payload `source`, roles or principal strings. Restrict publishing to the internal task exchange with broker permissions; preserved user identity remains authorization/audit context and does not grant administrator privileges.
 
@@ -132,7 +132,7 @@ All runner functions return Hash outcomes. Rejections and exceptions carry `succ
 
 ## Configuration
 
-Extension settings live at `extensions.conditioner`. Framework runners and actors use their automatically injected `settings` helper; standalone evaluation and transport objects read `Legion::Settings[:extensions][:conditioner]` directly. Defaults are registered at startup, while every new evaluation reads the live user policy without a cached settings tree:
+Extension settings live at `extensions.conditioner`. `def self.default_settings` is defined directly in the root extension module in `conditioner.rb`. Framework runners and actors use their automatically injected `settings` helper; standalone evaluation reads `Legion::Settings[:extensions][:conditioner]` directly. Defaults register at startup, and each evaluation reads live policy without a cached settings tree:
 
 | Setting | Default | Purpose |
 |---------|---------|---------|
@@ -140,9 +140,6 @@ Extension settings live at `extensions.conditioner`. Framework runners and actor
 | `consent_tiers` | `['tier1', 'tier2', 'tier3']` | Ordered tiers, least privilege first |
 | `default_domain` / `unclassified_domain` | `'default'` / `'unclassified'` | Domain classification labels |
 | `resolutions` | `{primary: 'primary', secondary: 'secondary', none: 'none'}` | Resolution labels, independent of acceptance decisions |
-| `transport.exchange` / `transport.queue` | `'task'` / `'task.conditioner'` | Exchange and queue declarations |
-| `transport.binding_queue` / `transport.legacy_route` | `'conditioner'` / `'task.subtask'` | Existing queue binding and compatibility input route |
-| `transport.success_route` | `'task.conditioner.succeeded'` | Extension success-message route |
 
 Pipeline statuses, canonical metadata fields and conditioner/transform routes are immutable wire identities owned by `Legion::Transport::Task::Protocol` (`require 'legion/transport/task/protocol'`), not process-local settings. Operator policy remains dynamic under `extensions.conditioner`; strict publication policy belongs to `transport.task_publication`. Local overrides cannot rename a downstream stage or reinterpret its status. No database/cache/crypt dependency or service is required for standalone evaluation; AMQP actor dispatch requires a functioning transport. Conditioner has no execution-schema dependency: forwarding uses Transport messages, and rejection updates use the framework task helper (the Task model when Data is connected, otherwise a TaskUpdate message), not attempts, leases or an outbox.
 
@@ -159,6 +156,9 @@ Permissions are a boolean map, not an additive array: `false` survives default r
 - **Exchange**: `task` (inherits from `Legion::Transport::Exchanges::Task`)
 - **Queue**: `task.conditioner`
 - **Routing keys**: `task.subtask`, `task.subtask.conditioner`
+- **Success-message route**: `task.conditioner.succeeded`
+
+These are fixed transport identities, not configurable settings. CI uses released Transport; only the coordinated Settings companion is pinned. Conditioner does not install or pin Data separately—actor persistence uses the framework task helper.
 
 ## Requirements
 

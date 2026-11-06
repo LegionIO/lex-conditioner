@@ -3,14 +3,13 @@
 require 'legion/json'
 require 'legion/json/helper'
 require 'legion/logging'
-require_relative '../settings'
+require_relative '../../conditioner'
+require_relative '../configuration_error'
 require_relative 'comparator'
 
 module Legion
   module Extensions
     module Conditioner
-      class ConfigurationError < ArgumentError; end
-
       class Condition
         include Legion::Logging::Helper
         include Legion::JSON::Helper
